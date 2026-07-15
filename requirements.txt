@@ -1,0 +1,15 @@
+crawl4ai
+chromadb
+ollama
+crawl4ai-setup
+rank_bm25
+google-genai
+python-dotenv
+kokoro soundfile
+faster-whisper
+ctranslate2
+fastapi
+uvicorn
+python-multipart
+omnivoice
+httpx

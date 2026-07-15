@@ -1,0 +1,94 @@
+{
+  "universal_settings": {
+    "crawler": {
+      "user_agent": "PakAdmissionsBot/0.1 (research; FYP)",
+      "rate_limit_per_domain_seconds": 1.5,
+      "max_concurrent_per_domain": 2,
+      "request_timeout_seconds": 60,
+      "max_retries": 3,
+      "retry_backoff_seconds": 5
+    },
+    "universal_excluded_paths": [
+      "/alumni/",
+      "/careers/",
+      "/jobs/",
+      "/gallery/",
+      "/photo-gallery/",
+      "/events/",
+      "/news/",
+      "/news-category/",
+      "/press-release/",
+      "/library/",
+      "/contact-us/",
+      "/board/",
+      "/governors/",
+      "/trustees/",
+      "/oric/",
+      "/iqae/",
+      "/coee/",
+      "/research/",
+      "/membership/",
+      "/verification/",
+      "/lms/",
+      "/slate/"
+    ],
+    "secondary_content_paths": [
+      "/faculty/",
+      "/staff/",
+      "/seecs/",
+      "/sbasse/",
+      "/sdsb/",
+      "/mgshss/",
+      "/sahsol/"
+    ],
+    "time_sensitive_path_patterns": [
+      "/dates",
+      "/schedule",
+      "/critical-dates",
+      "/announcements",
+      "/updates",
+      "/deadline"
+    ],
+    "cycle_markers": {
+      "url_patterns": [
+        "Fall\\d{4}",
+        "Spring\\d{4}",
+        "-fall-\\d{4}",
+        "-spring-\\d{4}"
+      ],
+      "content_patterns": [
+        "Fall 20\\d{2}",
+        "Spring 20\\d{2}",
+        "Academic Year 20\\d{2}-\\d{2}",
+        "20\\d{2}-\\d{2} academic year",
+        "cycle 20\\d{2}"
+      ]
+    }
+  },
+  "entities": {
+    "lums": {
+      "type": "university",
+      "display_name": "Lahore University of Management Sciences",
+      "crawl": {
+        "root_urls": ["https://lums.edu.pk/programmes/bs-computer-science"],
+        "depth": 0,
+        "allowed_domains": ["lums.edu.pk"],
+        "additional_excluded_paths": [],
+        "ssl_verify": true
+      },
+      "linked_entity_ids": []
+    },
+    "habib": {
+      "type": "university",
+      "display_name": "Habib University",
+      "crawl": {
+        "root_urls": ["https://habib.edu.pk/academics/sse/computer-science/"],
+        "depth": 0,
+        "allowed_domains": ["habib.edu.pk"],
+        "additional_excluded_paths": [],
+        "ssl_verify": true
+      },
+      "linked_entity_ids": []
+    }
+  }
+}
