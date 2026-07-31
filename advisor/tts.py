@@ -47,8 +47,7 @@ def stream_pcm(text: str, pipeline: KPipeline | None = None):
 
 def speak(text: str, out_path: str = "answer.wav",
           pipeline: KPipeline | None = None) -> str:
-    """Synthesize `text` to a WAV file at out_path. Reuses a passed-in
-    pipeline if given, else loads one. Returns the output path."""
+    """Reuses a passed-in pipeline if given, else loads one."""
     if pipeline is None:
         pipeline = load_pipeline()
 

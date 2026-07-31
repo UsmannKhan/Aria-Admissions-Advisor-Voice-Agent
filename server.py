@@ -31,8 +31,6 @@ AUDIO_IN = PROJECT_ROOT / "data" / "audio" / "input"
 AUDIO_OUT.mkdir(parents=True, exist_ok=True)
 AUDIO_IN.mkdir(parents=True, exist_ok=True)
 
-# advisor package modules import each other with bare names.
-sys.path.insert(0, str(PROJECT_ROOT / "advisor"))
 
 # Let CTranslate2 find torch's cuDNN 9 DLLs on Windows.
 if sys.platform == "win32":
@@ -47,9 +45,9 @@ if sys.platform == "win32":
 
 load_dotenv(PROJECT_ROOT / ".env")
 
-import stt
-import tts
-from generate import answer_query, get_client
+from advisor import stt, tts
+from advisor.baseline.pipeline import answer_query
+from advisor.core.llm import get_client
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse, StreamingResponse, Response
@@ -68,8 +66,8 @@ async def lifespan(app: FastAPI):
     STATE["whisper"] = stt.load_model()
     STATE["kokoro"] = tts.load_pipeline()
     STATE["gemini"] = get_client()
-    import retrieve
-    retrieve.warm_embedder()   # load bge-m3 now, else the first query is slow
+    from advisor.core import retrieval
+    retrieval.warm_embedder()   # load bge-m3 now, else the first query is slow
     print("[server] warm-up complete.")
     yield
     STATE.clear()
@@ -171,7 +169,7 @@ async def transcribe(audio: UploadFile = File(...), language: str = Form("en")):
 
 @app.post("/speak")
 def speak(body: SpeakIn):
-    """Synthesize text to a WAV and return it. (Non-streaming fallback.)"""
+    """Non-streaming fallback."""
     if not body.text.strip():
         raise HTTPException(400, "empty text")
     out_path = AUDIO_OUT / f"answer_{uuid.uuid4().hex[:8]}.wav"

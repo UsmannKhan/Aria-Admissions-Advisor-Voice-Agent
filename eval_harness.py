@@ -24,7 +24,6 @@ import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(PROJECT_ROOT / "advisor"))
 
 # Windows cuDNN DLL fix (same as server.py) so faster-whisper deps load.
 if sys.platform == "win32":
@@ -39,8 +38,10 @@ if sys.platform == "win32":
 from dotenv import load_dotenv
 load_dotenv(PROJECT_ROOT / ".env")
 
-from retrieve import retrieve, detect_entities
-from generate import answer_query, get_client
+from advisor.core.retrieval import retrieve
+from advisor.core.entities import detect_entities
+from advisor.baseline.pipeline import answer_query
+from advisor.core.llm import get_client
 
 
 # ---------------------------------------------------------------------------

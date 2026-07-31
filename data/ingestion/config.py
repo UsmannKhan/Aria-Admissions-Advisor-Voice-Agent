@@ -9,67 +9,31 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 
-# =============================================================================
-# Paths
-# =============================================================================
-
-# Project root: two levels up from this file (data/ingestion/config.py)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-# Where ChromaDB persists its data.
 CHROMA_DB_PATH = Path(os.environ.get(
     "CHROMA_DB_PATH",
     str(PROJECT_ROOT / "data" / "chroma_db")
 ))
 
-# Where to write the entities config. Default is alongside this file.
 ENTITIES_CONFIG_PATH = Path(__file__).parent / "entities.json"
 
-# Where to write per-run logs
 LOG_DIR = PROJECT_ROOT / "data" / "ingestion" / "logs"
 
 
-# =============================================================================
-# ChromaDB
-# =============================================================================
-
-CHROMA_COLLECTION_NAME = "pak_admissions_v1"
+CHROMA_COLLECTION_NAME = "pak_admissions_v2"  # v1 = 2-page prototype corpus
 
 
-# =============================================================================
-# Ollama (embedding service)
-# =============================================================================
-
-# Default Ollama host
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
-# Embedding model name
 EMBEDDING_MODEL = "bge-m3"
-
-# Vector dimensionality
 EMBEDDING_DIMENSIONS = 1024
-
-# How many chunks to embed per Ollama call.
 EMBEDDING_BATCH_SIZE = 16
 
 
-# =============================================================================
-# Chunking
-# =============================================================================
+MAX_CHUNK_CHARS = 3500   # force-split above this
+MIN_CHUNK_CHARS = 300    # merge smaller fragments into neighbours
 
-# Target chunk size in characters.
-TARGET_CHUNK_CHARS = 2000
-
-# Hard upper bound. Chunks larger than this get force-split.
-MAX_CHUNK_CHARS = 3500
-
-# Minimum chunk size. Smaller fragments get merged with neighbours unless they're a complete heading section.
-MIN_CHUNK_CHARS = 300
-
-
-# =============================================================================
-# Crawler defaults (per-entity overrides live in entities.json)
-# =============================================================================
 
 DEFAULT_RATE_LIMIT_SECONDS = 1.5
 DEFAULT_MAX_CONCURRENT = 2
@@ -78,17 +42,8 @@ DEFAULT_MAX_RETRIES = 3
 DEFAULT_RETRY_BACKOFF = 5
 
 
-# =============================================================================
-# Versioning
-# =============================================================================
+CRAWLER_VERSION = "0.2.0"
 
-# Used in ChunkMetadata to identify which crawler version produced a given chunk.
-CRAWLER_VERSION = "0.1.0"
-
-
-# =============================================================================
-# Chunk metadata schema
-# =============================================================================
 
 EntityType = Literal["university", "scholarship", "exam"]
 FreshnessClass = Literal["stable", "slow_changing", "time_sensitive", "cycle_bound"]
@@ -97,34 +52,34 @@ InclusionCategory = Literal["primary", "secondary"]
 
 
 class ChunkMetadata(BaseModel):
-    """Metadata stored with each chunk. Shared with the PDF pipeline later."""
+    """Metadata stored with each chunk."""
 
-    # --- Identity / provenance ---
+    # identity / provenance
     source_url: str
     source_domain: str
-    scrape_date: str  # ISO 8601 timestamp
+    scrape_date: str  # ISO 8601
     page_title: str
     crawler_version: str
 
-    # --- Routing ---
+    # routing
     entity_id: str
     entity_type: EntityType
-    content_category: str  # e.g. "eligibility", "fees", "scholarship_rules"
+    content_category: str  # "eligibility", "fees", ...
     freshness_class: FreshnessClass
     inclusion_category: InclusionCategory
     page_type: PageType
     cycle_year: Optional[int] = None
 
-    # --- Structure ---
+    # structure
     headings: list[str] = Field(default_factory=list)
     chunk_position: int
     total_chunks_in_page: int
     outbound_urls: list[str] = Field(default_factory=list)
 
-    # --- Cross-source linking ---
+    # cross-source linking
     linked_entity_ids: list[str] = Field(default_factory=list)
 
-    # --- Cheap entity extraction (regex-based) ---
+    # regex-extracted mentions
     mentioned_programs: list[str] = Field(default_factory=list)
     mentioned_scholarships: list[str] = Field(default_factory=list)
     mentioned_exams: list[str] = Field(default_factory=list)
@@ -132,7 +87,7 @@ class ChunkMetadata(BaseModel):
     mentioned_amounts: list[str] = Field(default_factory=list)
 
     def to_chroma_metadata(self) -> dict:
-        """Flatten to scalar values for Chroma; lists become comma-joined strings."""
+        """Chroma only takes scalars: lists become comma-joined strings."""
         d = self.model_dump()
         for key, value in list(d.items()):
             if isinstance(value, list):
@@ -141,10 +96,6 @@ class ChunkMetadata(BaseModel):
                 d[key] = ""
         return d
 
-
-# =============================================================================
-# Known entities for content extraction (regex-based)
-# =============================================================================
 
 KNOWN_PROGRAMS = [
     "BSCS", "BS CS", "BS(CS)", "BS Computer Science",
@@ -170,6 +121,11 @@ KNOWN_PROGRAMS = [
     "B Architecture", "B Industrial Design",
     "BA-LLB", "LLB",
     "BS Applied Linguistics",
+    "BSc Management Science", "BSc (Honours) Management Science",
+    "BSc Accounting and Finance", "BSc (Honours) Accounting and Finance",
+    "BA (Honours) Communication and Design", "Communication and Design",
+    "BSc (Honours) Social Development and Policy", "Social Development and Policy",
+    "BA (Honours) Comparative Humanities", "Comparative Humanities",
 ]
 
 KNOWN_SCHOLARSHIPS = [
@@ -177,7 +133,8 @@ KNOWN_SCHOLARSHIPS = [
     "HEC Need-Based", "Need-Based Scholarship", "NBS",
     "PEEF", "Punjab Educational Endowment Fund",
     "NOP", "National Outreach Programme",
-    "Yohsin", "HU TOPS",
+    "Yohsin", "HU TOPS", "HUTOPS", "HU EOP", "HUEOPS",
+    "Excellence Scholarship", "NFAAF",
     "Honhaar",
     "Akhuwat", "Ihsan Trust", "Qarz-e-Hasna",
     "Merit Scholarship",

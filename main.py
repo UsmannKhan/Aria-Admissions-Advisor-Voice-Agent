@@ -26,8 +26,6 @@ AUDIO_IN = PROJECT_ROOT / "data" / "audio" / "input"
 AUDIO_OUT = PROJECT_ROOT / "data" / "audio" / "output"
 
 
-sys.path.insert(0, str(PROJECT_ROOT / "advisor"))
-
 # Let CTranslate2 (faster-whisper) find torch's bundled cuDNN 9 DLLs on Windows.
 if sys.platform == "win32":
     try:
@@ -41,9 +39,10 @@ if sys.platform == "win32":
 
 load_dotenv(PROJECT_ROOT / ".env")
 
-import stt
-import tts
-from generate import (answer_query, get_client, print_grounding, print_sources)
+from advisor import stt, tts
+from advisor.baseline.pipeline import (answer_query, print_grounding,
+                                     print_sources)
+from advisor.core.llm import get_client
 
 
 def warm_up(stt_model_size: str):

@@ -30,7 +30,44 @@
       "/membership/",
       "/verification/",
       "/lms/",
-      "/slate/"
+      "/slate/",
+      "/wp-content/",
+      "/faculty-profile/",
+      "/our-faculty/",
+      "/tenders/",
+      "/procurement/",
+      "/downloads/",
+      "/media/",
+      "/blog/",
+      "/giving/",
+      "/give-now/",
+      "/postgraduate",
+      "/graduate-programmes",
+      "/phd",
+      "/mba",
+      "/msc",
+      "/mphil",
+      "/executive-",
+      "/covid",
+      "/sites/default/files/",
+      "/edit",
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".gif",
+      ".webp",
+      ".svg",
+      ".mp4",
+      ".webm",
+      ".ico",
+      ".zip",
+      ".pdf",
+      ".doc",
+      ".docx",
+      ".xls",
+      ".xlsx",
+      ".ppt",
+      ".pptx"
     ],
     "secondary_content_paths": [
       "/faculty/",
@@ -39,7 +76,8 @@
       "/sbasse/",
       "/sdsb/",
       "/mgshss/",
-      "/sahsol/"
+      "/sahsol/",
+      "/departments/"
     ],
     "time_sensitive_path_patterns": [
       "/dates",
@@ -47,21 +85,25 @@
       "/critical-dates",
       "/announcements",
       "/updates",
-      "/deadline"
+      "/deadline",
+      "/dates-to-remember",
+      "/dates-deadlines"
     ],
     "cycle_markers": {
       "url_patterns": [
         "Fall\\d{4}",
         "Spring\\d{4}",
         "-fall-\\d{4}",
-        "-spring-\\d{4}"
+        "-spring-\\d{4}",
+        "20\\d{2}-\\d{2}"
       ],
       "content_patterns": [
         "Fall 20\\d{2}",
         "Spring 20\\d{2}",
         "Academic Year 20\\d{2}-\\d{2}",
         "20\\d{2}-\\d{2} academic year",
-        "cycle 20\\d{2}"
+        "cycle 20\\d{2}",
+        "Class of 20\\d{2}"
       ]
     }
   },
@@ -70,25 +112,685 @@
       "type": "university",
       "display_name": "Lahore University of Management Sciences",
       "crawl": {
-        "root_urls": ["https://lums.edu.pk/programmes/bs-computer-science"],
+        "root_urls": [
+          {
+            "url": "https://admission.lums.edu.pk/",
+            "depth": 0
+          },
+          {
+            "url": "https://admission.lums.edu.pk/undergraduate-programmes",
+            "depth": 0
+          },
+          {
+            "url": "https://admission.lums.edu.pk/admission-faqs",
+            "depth": 0
+          },
+          {
+            "url": "https://admission.lums.edu.pk/critical-dates-all-programmes",
+            "depth": 0
+          },
+          {
+            "url": "https://admission.lums.edu.pk/admission-policy",
+            "depth": 0
+          },
+          {
+            "url": "https://admission.lums.edu.pk/admission-support",
+            "depth": 0
+          },
+          {
+            "url": "https://admission.lums.edu.pk/how-apply-admission",
+            "depth": 0
+          },
+          {
+            "url": "https://admission.lums.edu.pk/testing-admissions",
+            "depth": 0
+          },
+          {
+            "url": "https://admission.lums.edu.pk/fee-structure-2019-2020",
+            "depth": 0
+          },
+          {
+            "url": "https://financial-aid.lums.edu.pk/",
+            "depth": 0
+          },
+          {
+            "url": "https://financial-aid.lums.edu.pk/financial-aid-options-fa",
+            "depth": 0
+          },
+          {
+            "url": "https://nop.lums.edu.pk/",
+            "depth": 0
+          },
+          {
+            "url": "https://nop.lums.edu.pk/how-to-apply-nop",
+            "depth": 0
+          },
+          {
+            "url": "https://nop.lums.edu.pk/faqs-nop",
+            "depth": 0
+          },
+          {
+            "url": "https://nop.lums.edu.pk/resources-nop",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/ba-honours-comparative-literature-and-creative-arts-clca",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/ba-honours-english",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/ba-honours-history",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/ba-llb-honours",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bs-biology",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bs-chemical-engineering",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bs-chemistry",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bs-computer-science",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bs-economics-and-mathematics-joint-major",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bs-electrical-engineering",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bs-mathematics",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bs-physics",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bsc-honours-accounting-and-finance",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bsc-honours-anthropology-sociology",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bsc-honours-economics",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bsc-honours-economics-and-mathematics-joint-major",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bsc-honours-economics-data-and-computer-science-joint-major",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bsc-honours-management-science",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bsc-honours-political-science",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bsc-honours-politics-and-economics",
+            "depth": 0
+          },
+          {
+            "url": "https://lums.edu.pk/programmes/bsc-honours-psychology",
+            "depth": 0
+          }
+        ],
         "depth": 0,
-        "allowed_domains": ["lums.edu.pk"],
-        "additional_excluded_paths": [],
+        "allowed_domains": [
+          "lums.edu.pk",
+          "admission.lums.edu.pk",
+          "financial-aid.lums.edu.pk",
+          "nop.lums.edu.pk"
+        ],
+        "allowed_path_patterns": [],
+        "additional_excluded_paths": [
+          "/programmes/transfer",
+          "/programmes/visiting",
+          "/programmes/auditing",
+          "/graduate-financial-aid",
+          "nop.lums.edu.pk/ur",
+          "/testimonials-nop",
+          "/news-nop",
+          "/news/",
+          "/events/"
+        ],
+        "max_pages": 60,
         "ssl_verify": true
       },
-      "linked_entity_ids": []
+      "linked_entity_ids": [
+        "sat",
+        "hec_nbs"
+      ]
     },
     "habib": {
       "type": "university",
       "display_name": "Habib University",
       "crawl": {
-        "root_urls": ["https://habib.edu.pk/academics/sse/computer-science/"],
+        "root_urls": [
+          {
+            "url": "https://habib.edu.pk/admissions/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/admissions/admissions-faqs/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/admissions/international-examination-board/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/admissions/international-examination-board/admission-prerequisites/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/admissions/international-examination-board/admission-schedule/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/admissions/international-examination-board/entrance-examination/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/admissions/national-examination-boards/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/admissions/national-examination-boards/hueop/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/admissions/student-finance/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/admissions/student-finance-guidebook/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/admissions/transfer-students/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/academics/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/academics/sse/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/academics/sse/electrical-engineering/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/academics/sse/computer-engineering/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/academics/sse/computer-science/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/academics/ahss/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/academics/ahss/social-development-and-policy/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/academics/ahss/communication-and-design/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/academics/ahss/comparative-humanities/",
+            "depth": 0
+          },
+          {
+            "url": "https://habib.edu.pk/habib-core/",
+            "depth": 0
+          }
+        ],
         "depth": 0,
-        "allowed_domains": ["habib.edu.pk"],
+        "allowed_domains": [
+          "habib.edu.pk"
+        ],
+        "allowed_path_patterns": [],
         "additional_excluded_paths": [],
-        "ssl_verify": true
+        "max_pages": 40,
+        "ssl_verify": true,
+        "rate_limit_per_domain_seconds": 5.0
       },
-      "linked_entity_ids": []
+      "linked_entity_ids": [
+        "sat",
+        "hec_nbs"
+      ]
+    },
+    "nust": {
+      "type": "university",
+      "display_name": "National University of Sciences and Technology",
+      "crawl": {
+        "root_urls": [
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/entry-route-to-nust/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/updates-on-ug-admissions/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/list-of-ug-programmes-and-institutions/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/salient-features/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/dates-to-remember/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/expatriate-students/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/eligibility-criteria-for-ug-programmes/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/ineligibility-criteria/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/academic-qualification-required-for-different-ug-progammes/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/dae-eligibility-criteria/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/procedure-of-admission-on-the-basis-of-net/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/subjects-included-in-net-with-weightings/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/merit-criteria-for-admission-on-net-basis/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/applying-on-the-basis-of-scholastic-aptitude-test-sat/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/ug-admission-application-processing-fee/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/undergraduate-selection-process/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/undergraduates/migration-transfer-policy/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/faq-category/ug-admission/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/scholarships/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/scholarships/financial-assistance-for-undergraduate-students/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/scholarships/need-based-financial-aid/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/scholarships/guidelines-to-access-and-submit-need-based-financial-aid-application-form-nfaaf/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/scholarships/nfaaf-documentation-requirements/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/scholarships/interest-free-loan-ihsan-trust/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/scholarships/deferment-of-tuition-fee-subsistence-allowance/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/scholarships/punjab-educational-endowment-fund-peef-scholarships/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/scholarships/other-opportunities/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/scholarships/frequently-asked-questions-faqs/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/fee-structure/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/fee-structure/undergraduate-financial-matters/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/fee-structure/refund-policy/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/fee-structure/hostel-accommodation/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/fee-structure/other-fee-charges/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/fee-structure/mode-of-payment/",
+            "depth": 0
+          },
+          {
+            "url": "https://nust.edu.pk/admissions/fee-structure/frequently-asked-questions/",
+            "depth": 0
+          },
+          {
+            "url": "https://seecs.nust.edu.pk/departments/department-of-computer-science/",
+            "depth": 0
+          },
+          {
+            "url": "https://seecs.nust.edu.pk/departments/department-of-electrical-engineering/",
+            "depth": 0
+          },
+          {
+            "url": "https://seecs.nust.edu.pk/department-page/bachelors-of-science-in-computer-science-bscs/",
+            "depth": 0
+          },
+          {
+            "url": "https://nbs.nust.edu.pk/ug-admissions/",
+            "depth": 0
+          },
+          {
+            "url": "https://nbs.nust.edu.pk/academics-program/",
+            "depth": 0
+          }
+        ],
+        "depth": 0,
+        "allowed_domains": [
+          "nust.edu.pk",
+          "seecs.nust.edu.pk",
+          "nbs.nust.edu.pk"
+        ],
+        "allowed_path_patterns": [],
+        "additional_excluded_paths": [],
+        "max_pages": 60,
+        "ssl_verify": true,
+        "rate_limit_per_domain_seconds": 4.0
+      },
+      "linked_entity_ids": [
+        "sat",
+        "hec_nbs"
+      ]
+    },
+    "sat": {
+      "type": "exam",
+      "display_name": "SAT (College Board)",
+      "crawl": {
+        "root_urls": [
+          {
+            "url": "https://satsuite.collegeboard.org/sat",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/whats-on-the-test",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/whats-on-the-test/structure",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/whats-on-the-test/reading-writing",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/whats-on-the-test/math",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/dates-deadlines",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/registration",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/registration/online-registration",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/registration/fee-waivers",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/what-to-bring-do",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/what-to-bring-do/what-to-bring",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/what-to-bring-do/id-requirements",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/what-to-bring-do/what-to-expect",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/testing-rules",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/device-readiness",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/device-lending",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/accommodations",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/accommodations/registering-with-accommodations",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/sat/accommodations/using-accommodations",
+            "depth": 0
+          },
+          {
+            "url": "https://satsuite.collegeboard.org/scores",
+            "depth": 0
+          }
+        ],
+        "depth": 0,
+        "allowed_domains": [
+          "satsuite.collegeboard.org"
+        ],
+        "allowed_path_patterns": [],
+        "additional_excluded_paths": [
+          "/psat",
+          "/educators",
+          "/k12",
+          "/testing-staff",
+          "/test-center-search",
+          "/test-center-closings"
+        ],
+        "max_pages": 25,
+        "ssl_verify": true,
+        "rate_limit_per_domain_seconds": 4.0
+      },
+      "linked_entity_ids": [
+        "lums",
+        "habib",
+        "nust"
+      ]
+    },
+    "hec_nbs": {
+      "type": "scholarship",
+      "display_name": "HEC Need-Based Scholarship",
+      "crawl": {
+        "root_urls": [
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/default.aspx",
+            "depth": 0
+          },
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/Eligibility-Criteria.aspx",
+            "depth": 0
+          },
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/Scholarship-Award-Process.aspx",
+            "depth": 0
+          },
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/How-To-Apply.aspx",
+            "depth": 0
+          },
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/Financial-Support.aspx",
+            "depth": 0
+          },
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/Freqently-Asked-Question.aspx",
+            "depth": 0
+          }
+        ],
+        "depth": 0,
+        "allowed_domains": [
+          "hec.gov.pk",
+          "www.hec.gov.pk"
+        ],
+        "allowed_path_patterns": [],
+        "additional_excluded_paths": [
+          "/Urdu/"
+        ],
+        "max_pages": 10,
+        "ssl_verify": false,
+        "rate_limit_per_domain_seconds": 4.0
+      },
+      "linked_entity_ids": [
+        "lums",
+        "habib",
+        "nust"
+      ]
+    },
+    "hec_ehsaas": {
+      "type": "scholarship",
+      "display_name": "HEC Ehsaas Undergraduate Scholarship",
+      "crawl": {
+        "root_urls": [
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/Ehsaas/Pages/default.aspx",
+            "depth": 0
+          },
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/Ehsaas/Pages/Objectives.aspx",
+            "depth": 0
+          },
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/Ehsaas/Pages/Eligibility-Criteria.aspx",
+            "depth": 0
+          },
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/Ehsaas/Pages/How-to-Apply.aspx",
+            "depth": 0
+          },
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/Ehsaas/Pages/Supporting-Documents.aspx",
+            "depth": 0
+          },
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/Ehsaas/Pages/Scholarship-Award-Process.aspx",
+            "depth": 0
+          },
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/Ehsaas/Pages/Financial-Support.aspx",
+            "depth": 0
+          },
+          {
+            "url": "https://www.hec.gov.pk/english/scholarshipsgrants/Ehsaas/Pages/FAQs.aspx",
+            "depth": 0
+          }
+        ],
+        "depth": 0,
+        "allowed_domains": [
+          "hec.gov.pk",
+          "www.hec.gov.pk"
+        ],
+        "allowed_path_patterns": [],
+        "additional_excluded_paths": [
+          "/Urdu/"
+        ],
+        "rate_limit_per_domain_seconds": 4.0,
+        "max_pages": 12,
+        "ssl_verify": false
+      },
+      "linked_entity_ids": [
+        "lums",
+        "habib",
+        "nust"
+      ]
     }
   }
 }

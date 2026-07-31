@@ -6,8 +6,9 @@ content to Markdown, chunks semantically (respecting headings),
 classifies freshness, extracts mentioned entities, embeds via Ollama,
 and upserts into ChromaDB.
 
-Idempotent: re-running overwrites existing chunks for the same source_url
-+ chunk_position. Safe to re-run after partial failures.
+Idempotent: before upserting, all existing chunks for each crawled
+source_url are deleted, so re-runs fully replace a page's chunks (no
+stale orphans when a page shrinks). Safe to re-run after partial failures.
 
 Usage:
     python crawler.py                          # Run all entities
@@ -50,13 +51,7 @@ from crawl4ai.deep_crawling.filters import (
 import config as cfg
 
 
-# =============================================================================
-# Logging
-# =============================================================================
-
-
 def setup_logging() -> logging.Logger:
-    """Configure logging to both stderr and a timestamped log file."""
     cfg.LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_file = cfg.LOG_DIR / f"crawl_{datetime.now():%Y%m%d_%H%M%S}.log"
 
@@ -84,14 +79,8 @@ def setup_logging() -> logging.Logger:
 log = logging.getLogger("crawler")
 
 
-# =============================================================================
-# Data classes for in-memory chunk representation
-# =============================================================================
-
-
 @dataclass
 class Chunk:
-    """A chunk of content ready for embedding."""
     text: str
     headings: list[str] = field(default_factory=list)
     chunk_position: int = 0
@@ -100,20 +89,13 @@ class Chunk:
 
 @dataclass
 class CrawledPage:
-    """Output of crawling a single URL."""
     url: str
     title: str
     markdown: str
     outbound_urls: list[str] = field(default_factory=list)
 
 
-# =============================================================================
-# URL filtering (per-entity exclusions)
-# =============================================================================
-
-
 def url_is_excluded(url: str, excluded_paths: list[str]) -> bool:
-    """True if any excluded path substring matches this URL."""
     path = urlparse(url).path.lower()
     for ex in excluded_paths:
         if ex.lower() in path:
@@ -122,14 +104,8 @@ def url_is_excluded(url: str, excluded_paths: list[str]) -> bool:
 
 
 def url_is_secondary(url: str, secondary_paths: list[str]) -> bool:
-    """True if URL matches a secondary-content path pattern."""
     path = urlparse(url).path.lower()
     return any(s.lower() in path for s in secondary_paths)
-
-
-# =============================================================================
-# Markdown chunker (semantic + size-bounded)
-# =============================================================================
 
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
@@ -140,7 +116,6 @@ def _split_oversized(text: str, max_chars: int) -> list[str]:
     if len(text) <= max_chars:
         return [text]
 
-    # Split on paragraph boundaries first.
     paragraphs = re.split(r"\n\s*\n", text)
     chunks: list[str] = []
     buffer = ""
@@ -153,7 +128,7 @@ def _split_oversized(text: str, max_chars: int) -> list[str]:
             if len(para) <= max_chars:
                 buffer = para
             else:
-                # Paragraph itself is oversize then split on sentences.
+                # single paragraph over the limit: fall back to sentences
                 sentences = re.split(r"(?<=[.!?])\s+", para)
                 sub_buf = ""
                 for sent in sentences:
@@ -170,33 +145,71 @@ def _split_oversized(text: str, max_chars: int) -> list[str]:
         chunks.append(buffer.strip())
     return chunks
 
-# =============================================================================
-# Chunk cleanup: nav-boilerplate filtering + deduplication
-# =============================================================================
 
 _LINK_RE = re.compile(r"\[[^\]]*\]\([^)]*\)")  # markdown links [text](url)
 
 
-def _is_nav_boilerplate(text: str, headings: list[str]) -> bool:
-    """Nav boilerplate = no heading path and link-dominated."""
-    if headings:           # anything under a heading is treated as content
-        return False
+# chrome fragments that mark a chunk as pure site furniture even under a
+# heading (footer/copyright/social/SharePoint nav). Matched case-insensitively.
+_CHROME_MARKERS = (
+    "all rights reserved",
+    "privacy policy",
+    "terms & conditions",
+    "terms and conditions",
+    "copyrights hec",
+    "webmail",
+    "world political map",
+    "trademark notice",
+    "grievances review committee",
+    "tender information",
+    "anti-harassment helpline",
+    "nust at a glance",
+    "learning management system",
+    "quick links",
+    "in focus",
+)
 
+# a "sentence-like" run of prose = >=6 words ending in . ? ! or : with no
+# markdown link syntax. Presence of real prose protects a chunk from the
+# nav filter (contact blocks, programme dropdowns, etc. survive).
+_PROSE_RE = re.compile(r"[A-Za-z][A-Za-z,'\-\s]{25,}[.?!:]")
+
+
+def _has_prose(text: str) -> bool:
+    # strip markdown links/images first so link labels don't count as prose
+    stripped = re.sub(r"!?\[[^\]]*\]\([^)]*\)", " ", text)
+    return bool(_PROSE_RE.search(stripped))
+
+
+def _is_nav_boilerplate(text: str, headings: list[str]) -> bool:
+    """Drop pure site chrome (nav menus, footers, social/legal blocks) even
+    when it inherits a real heading. Chunks with genuine prose (contact info,
+    programme lists, fee/eligibility text) are kept -- that borderline cleanup
+    is left to the retrieval side, per design."""
     stripped = text.strip()
     if not stripped:
-        return True        # genuinely empty
+        return True
 
     links = _LINK_RE.findall(stripped)
     link_chars = sum(len(m) for m in links)
     link_ratio = link_chars / max(len(stripped), 1)
+    low = stripped.lower()
+    chrome_hits = sum(1 for m in _CHROME_MARKERS if m in low)
 
-    # No heading, plus either link-heavy text or just lots of links -> nav.
-    return link_ratio > 0.4 or len(links) >= 8
+    # known chrome marker + link-heavy = footer/nav even if it contains a
+    # stray sentence like "...Technology. All Rights Reserved." -> drop
+    if chrome_hits >= 1 and (link_ratio > 0.3 or len(links) >= 3):
+        return True
+
+    # otherwise, real prose protects the chunk
+    if _has_prose(stripped):
+        return False
+
+    # no prose: drop if link-dominated, many links, or any chrome marker
+    return link_ratio > 0.4 or len(links) >= 6 or chrome_hits >= 1
 
 def _content_key(text: str) -> str:
-    """Key for near-duplicate detection: first 300 non-whitespace chars.
-    Page-duplicated content shares a long identical opening even when
-    chunk boundaries differ slightly at the tail."""
+    """Near-duplicate key: first 300 non-whitespace chars."""
     t = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", text)
     t = re.sub(r"\s+", "", t).lower()
     return t[:300]
@@ -228,16 +241,8 @@ def _dedupe_and_clean(chunks: list["Chunk"]) -> list["Chunk"]:
 
 
 def chunk_markdown(markdown: str) -> list[Chunk]:
-    """
-    Chunk Markdown text semantically.
-
-    Strategy:
-      1. Walk the document, tracking heading hierarchy (H1, H2, H3).
-      2. Group content under headings into "sections".
-      3. Emit each section as a chunk, splitting oversized sections by
-         paragraph (and then sentence) boundaries.
-      4. Tag each chunk with the heading path it belongs to.
-    """
+    """Heading-scoped sections, force-split above MAX_CHUNK_CHARS. Each chunk
+    keeps its heading path."""
     if not markdown or not markdown.strip():
         return []
 
@@ -255,22 +260,26 @@ def chunk_markdown(markdown: str) -> list[Chunk]:
     for line in lines:
         heading_match = HEADING_RE.match(line)
         if heading_match:
-            # Save what we have under the previous heading path.
             flush_section()
             current_content = []
 
             level = len(heading_match.group(1))
             text = heading_match.group(2).strip()
 
-            # Pop deeper-or-equal headings, then push.
+            # scrub markdown images (incl. data:image/svg+xml logo junk) and
+            # unwrap links so heading paths stay clean text, not markup
+            text = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", text)      # drop images
+            text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)  # unwrap links
+            text = text.strip()
+
             while heading_stack and heading_stack[-1][0] >= level:
                 heading_stack.pop()
-            heading_stack.append((level, text))
+            if text:                       # skip headings that were pure image junk
+                heading_stack.append((level, text))
         else:
             current_content.append(line)
     flush_section()
 
-    # Convert sections to chunks, splitting oversized ones.
     chunks: list[Chunk] = []
     for heading_path, content_lines in sections:
         text = "\n".join(content_lines).strip()
@@ -295,19 +304,13 @@ def chunk_markdown(markdown: str) -> list[Chunk]:
                     continue
             chunks.append(Chunk(text=part, headings=heading_path))
 
-    # Remove nav boilerplate and duplicates before numbering, so positions and totals reflect the final chunk set.
+    # clean BEFORE numbering so positions reflect the final set
     chunks = _dedupe_and_clean(chunks)
 
-    # Fill in chunk_position / total_chunks_in_page.
     for i, ch in enumerate(chunks):
         ch.chunk_position = i
         ch.total_chunks_in_page = len(chunks)
     return chunks
-
-
-# =============================================================================
-# Freshness classification
-# =============================================================================
 
 
 def _compile_patterns(patterns: list[str]) -> list[re.Pattern]:
@@ -319,21 +322,20 @@ def classify_freshness(
     text: str,
     universal: dict,
 ) -> tuple[cfg.FreshnessClass, int | None]:
-    """
-    Return (freshness_class, cycle_year).
-
-    When uncertain, bias toward time_sensitive: better to re-check a date
-    than serve a stale one.
-    """
+    """Return (freshness_class, cycle_year) for ONE CHUNK's text (not the whole
+    page -- classifying per-page then stamping every chunk was tagging entire
+    pages cycle_bound off a single stray 'Fall 2026' in a footer). cycle_bound
+    now requires the chunk to be *about* a cycle: multiple cycle mentions, or a
+    cycle marker together with fee/deadline/schedule language."""
     cycle_year: int | None = None
 
-    # URL path -> time_sensitive?
+    # URL path -> time_sensitive (the page IS a dates/schedule page)
     path = urlparse(url).path.lower()
     for pat in universal.get("time_sensitive_path_patterns", []):
         if pat.lower() in path:
             return "time_sensitive", cycle_year
 
-    # Cycle markers in URL?
+    # Cycle markers in URL -> cycle_bound (whole page is a specific cycle)
     for pat_str in universal.get("cycle_markers", {}).get("url_patterns", []):
         m = re.search(pat_str, url)
         if m:
@@ -342,16 +344,29 @@ def classify_freshness(
                 cycle_year = int(ym.group(0))
             return "cycle_bound", cycle_year
 
-    # Cycle markers in content?
-    for pat_str in universal.get("cycle_markers", {}).get("content_patterns", []):
-        m = re.search(pat_str, text, re.IGNORECASE)
-        if m:
-            ym = re.search(r"\d{4}", m.group(0))
+    # Cycle markers in THIS chunk's content -- but only cycle_bound if the
+    # chunk is genuinely cycle-specific, not just mentioning a year in passing.
+    cyc_pats = universal.get("cycle_markers", {}).get("content_patterns", [])
+    cyc_hits = 0
+    for pat_str in cyc_pats:
+        found = re.findall(pat_str, text, re.IGNORECASE)
+        cyc_hits += len(found)
+        if found and cycle_year is None:
+            ym = re.search(r"\d{4}", found[0])
             if ym:
                 cycle_year = int(ym.group(0))
-            return "cycle_bound", cycle_year
 
-    # Date-heavy content -> time_sensitive
+    cycle_context = re.search(
+        r"\b(fee|tuition|deadline|schedule|due date|semester|intake|"
+        r"last date|apply by|admission cycle|for fall|for spring)\b",
+        text, re.IGNORECASE,
+    )
+    # cycle_bound requires: 2+ cycle mentions, OR one cycle marker sitting in
+    # fee/deadline/schedule context. A lone "Class of 2027" won't trigger it.
+    if cyc_hits >= 2 or (cyc_hits >= 1 and cycle_context):
+        return "cycle_bound", cycle_year
+
+    # Date-heavy content (3+ explicit calendar dates) -> time_sensitive
     date_count = len(re.findall(
         r"\b(?:January|February|March|April|May|June|July|August|"
         r"September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|"
@@ -364,13 +379,7 @@ def classify_freshness(
     return "slow_changing", cycle_year
 
 
-# =============================================================================
-# Content category (lightweight heuristic)
-# =============================================================================
-
-
 def classify_content_category(url: str, headings: list[str]) -> str:
-    """Categorise a chunk based on URL path + heading hierarchy."""
     path = urlparse(url).path.lower()
     heading_text = " ".join(headings).lower()
     haystack = f"{path} {heading_text}"
@@ -394,20 +403,34 @@ def classify_content_category(url: str, headings: list[str]) -> str:
     return "general"
 
 
-# =============================================================================
-# Entity extraction (regex over known lists)
-# =============================================================================
+def _build_term_regexes(terms: list[str]) -> tuple[re.Pattern | None, re.Pattern | None]:
+    """Two regexes: short all-caps acronyms match case-SENSITIVELY (else
+    "sat their exams" hits SAT, "net cost" hits NET), everything else
+    case-insensitively."""
+    strict = [t for t in terms if t.isupper() and len(t) <= 4]
+    loose = [t for t in terms if t not in strict]
+
+    def rx(ts: list[str], flags: int = 0) -> re.Pattern | None:
+        if not ts:
+            return None
+        escaped = sorted({re.escape(t) for t in ts}, key=len, reverse=True)
+        return re.compile(r"\b(?:" + "|".join(escaped) + r")\b", flags)
+
+    return rx(strict), rx(loose, re.IGNORECASE)
 
 
-def _build_term_regex(terms: list[str]) -> re.Pattern:
-    """Build a single case-insensitive regex for a list of terms."""
-    escaped = sorted({re.escape(t) for t in terms}, key=len, reverse=True)
-    return re.compile(r"\b(?:" + "|".join(escaped) + r")\b", re.IGNORECASE)
+_PROGRAM_RES = _build_term_regexes(cfg.KNOWN_PROGRAMS)
+_SCHOLARSHIP_RES = _build_term_regexes(cfg.KNOWN_SCHOLARSHIPS)
+_EXAM_RES = _build_term_regexes(cfg.KNOWN_EXAMS)
 
 
-_PROGRAM_RE = _build_term_regex(cfg.KNOWN_PROGRAMS)
-_SCHOLARSHIP_RE = _build_term_regex(cfg.KNOWN_SCHOLARSHIPS)
-_EXAM_RE = _build_term_regex(cfg.KNOWN_EXAMS)
+def _find_terms(regexes: tuple[re.Pattern | None, re.Pattern | None],
+                text: str) -> list[str]:
+    out: list[str] = []
+    for rx in regexes:
+        if rx is not None:
+            out.extend(rx.findall(text))
+    return out
 
 _DATE_RE = re.compile(
     r"\b(?:January|February|March|April|May|June|July|August|"
@@ -425,7 +448,6 @@ _AMOUNT_RE = re.compile(
 
 
 def extract_mentions(text: str) -> dict[str, list[str]]:
-    """Pull out programs/scholarships/exams/dates/amounts mentioned in text."""
     def _dedupe_caseless(matches: Iterable[str]) -> list[str]:
         seen: set[str] = set()
         out: list[str] = []
@@ -437,17 +459,12 @@ def extract_mentions(text: str) -> dict[str, list[str]]:
         return out
 
     return {
-        "programs": _dedupe_caseless(_PROGRAM_RE.findall(text)),
-        "scholarships": _dedupe_caseless(_SCHOLARSHIP_RE.findall(text)),
-        "exams": _dedupe_caseless(_EXAM_RE.findall(text)),
+        "programs": _dedupe_caseless(_find_terms(_PROGRAM_RES, text)),
+        "scholarships": _dedupe_caseless(_find_terms(_SCHOLARSHIP_RES, text)),
+        "exams": _dedupe_caseless(_find_terms(_EXAM_RES, text)),
         "dates": _dedupe_caseless(_DATE_RE.findall(text)),
         "amounts": _dedupe_caseless(_AMOUNT_RE.findall(text)),
     }
-
-
-# =============================================================================
-# Crawl4AI integration
-# =============================================================================
 
 
 def build_browser_config(ssl_verify: bool) -> BrowserConfig:
@@ -456,6 +473,10 @@ def build_browser_config(ssl_verify: bool) -> BrowserConfig:
         headless=True,
         verbose=False,
         ignore_https_errors=(not ssl_verify),
+        # don't load images/media: each page view otherwise fires dozens of
+        # asset requests, which is what keeps tripping LUMS's rate limiter
+        text_mode=True,
+        light_mode=True,
         user_agent=(
             "Mozilla/5.0 (compatible; PakAdmissionsBot/0.1; "
             "research; FYP University of London)"
@@ -464,39 +485,50 @@ def build_browser_config(ssl_verify: bool) -> BrowserConfig:
 
 
 def build_run_config(entity_crawl: dict, universal: dict, depth: int) -> CrawlerRunConfig:
-    """Per-entity run config for deep crawling."""
     excluded = (
         universal.get("universal_excluded_paths", [])
         + entity_crawl.get("additional_excluded_paths", [])
     )
     allowed_domains = entity_crawl.get("allowed_domains", [])
 
-    filter_chain = FilterChain([
-        DomainFilter(allowed_domains=allowed_domains),
-        URLPatternFilter(
-            patterns=[f"*{p}*" for p in excluded],
-            reverse=True,  # block these patterns
-        ),
-    ])
+    # domain -> allowlist (if configured) -> blocklist. Without the
+    # allowlist, depth>0 follows top-nav links across the whole site.
+    filters = [DomainFilter(allowed_domains=allowed_domains)]
+    allowed_patterns = entity_crawl.get("allowed_path_patterns", [])
+    if allowed_patterns:
+        filters.append(URLPatternFilter(patterns=allowed_patterns))
+    filters.append(URLPatternFilter(
+        patterns=[f"*{p}*" for p in excluded],
+        reverse=True,  # block these patterns
+    ))
+    filter_chain = FilterChain(filters)
 
     deep_strategy = BFSDeepCrawlStrategy(
         max_depth=depth,
         include_external=False,
         filter_chain=filter_chain,
+        # fetch-side cap (--limit only caps pages kept afterwards)
+        max_pages=entity_crawl.get("max_pages", 50),
     )
 
+    rate = universal.get("crawler", {}).get(
+        "rate_limit_per_domain_seconds", cfg.DEFAULT_RATE_LIMIT_SECONDS)
     return CrawlerRunConfig(
         deep_crawl_strategy=deep_strategy,
         cache_mode=CacheMode.BYPASS,
         verbose=False,
-        page_timeout=cfg.DEFAULT_REQUEST_TIMEOUT * 1000,  # ms
+        page_timeout=90000,  # ms (90s: some PK-hosted pages are slow via this route)
         wait_until="domcontentloaded",
+        # random pause between requests inside deep-crawl batches
+        # (needs crawl4ai >= 0.8.5 to reach the dispatcher)
+        mean_delay=rate,
+        max_range=1.0,
     )
 
 
 async def crawl_entity(entity_id: str, entity: dict, universal: dict,
                        limit: int | None = None) -> list[CrawledPage]:
-    """Crawl all URLs for one entity. Returns deduplicated CrawledPage list."""
+    """Deduplicated by URL: roots often share nav links."""
     entity_crawl = entity["crawl"]
     root_urls = entity_crawl.get("root_urls", [])
     if not root_urls:
@@ -504,32 +536,79 @@ async def crawl_entity(entity_id: str, entity: dict, universal: dict,
         return []
 
     ssl_verify = entity_crawl.get("ssl_verify", True)
-    depth = entity_crawl.get("depth", 2)
+    default_depth = entity_crawl.get("depth", 2)
     browser_cfg = build_browser_config(ssl_verify)
-    run_cfg = build_run_config(entity_crawl, universal, depth)
+
+    # roots can be "url" or {"url": ..., "depth": 0} -- self-contained pages
+    # crawl at depth 0 so they don't re-fetch shared nav links per root
+    run_cfg_by_depth: dict[int, CrawlerRunConfig] = {}
+
+    def cfg_for(d: int) -> CrawlerRunConfig:
+        if d not in run_cfg_by_depth:
+            run_cfg_by_depth[d] = build_run_config(entity_crawl, universal, d)
+        return run_cfg_by_depth[d]
 
     seen_urls: set[str] = set()
     pages: list[CrawledPage] = []
 
+    # space out sequential root fetches. per-entity value wins over universal
+    # (Habib's WAF blocks at the universal 1.5s, so it overrides to 5s)
+    rate_limit = entity_crawl.get(
+        "rate_limit_per_domain_seconds",
+        universal.get("crawler", {}).get("rate_limit_per_domain_seconds",
+                                         cfg.DEFAULT_RATE_LIMIT_SECONDS)
+    )
+
+    max_retries = universal.get("crawler", {}).get(
+        "max_retries", cfg.DEFAULT_MAX_RETRIES)
+    backoff = universal.get("crawler", {}).get(
+        "retry_backoff_seconds", cfg.DEFAULT_RETRY_BACKOFF)
+
     async with AsyncWebCrawler(config=browser_cfg) as crawler:
-        for root_url in root_urls:
+        for i, root in enumerate(root_urls):
+            if isinstance(root, dict):
+                root_url = root["url"]
+                root_depth = root.get("depth", default_depth)
+            else:
+                root_url, root_depth = root, default_depth
             if limit is not None and len(pages) >= limit:
                 break
-            log.info("[%s] crawling root: %s", entity_id, root_url)
-            try:
-                results = await crawler.arun(url=root_url, config=run_cfg)
-            except Exception as exc:
-                log.error("[%s] crawl failed for %s: %s", entity_id, root_url, exc)
+            if root_url in seen_urls:
+                log.info("[%s] root already crawled as a child, skipping: %s",
+                         entity_id, root_url)
                 continue
+            if i > 0 and rate_limit:
+                await asyncio.sleep(rate_limit)
+            log.info("[%s] crawling root (depth %d): %s",
+                     entity_id, root_depth, root_url)
 
-            # arun may return a single result or list depending on deep_crawl
-            result_list = results if isinstance(results, list) else [results]
+            result_list = []
+            for attempt in range(max_retries):
+                try:
+                    results = await crawler.arun(url=root_url,
+                                                 config=cfg_for(root_depth))
+                except Exception as exc:
+                    log.error("[%s] crawl failed for %s (attempt %d/%d): %s",
+                              entity_id, root_url, attempt + 1, max_retries, exc)
+                    results = None
+                # arun may return a single result or list depending on deep_crawl
+                result_list = (results if isinstance(results, list)
+                               else [results] if results is not None else [])
+                if any(getattr(r, "success", False) for r in result_list):
+                    break
+                if attempt < max_retries - 1:
+                    log.warning("[%s] root yielded nothing, retrying in %ds",
+                                entity_id, backoff * (attempt + 1))
+                    await asyncio.sleep(backoff * (attempt + 1))
 
             for result in result_list:
                 if limit is not None and len(pages) >= limit:
                     break
                 if not getattr(result, "success", False):
-                    log.warning("[%s] fetch failed: %s", entity_id, getattr(result, "url", "?"))
+                    log.warning("[%s] fetch failed: %s | status=%s | %s",
+                                entity_id, getattr(result, "url", "?"),
+                                getattr(result, "status_code", "?"),
+                                str(getattr(result, "error_message", ""))[:300])
                     continue
                 url = result.url
                 if url in seen_urls:
@@ -546,7 +625,7 @@ async def crawl_entity(entity_id: str, entity: dict, universal: dict,
                     else str(md_obj)
                 )
                 if not markdown or len(markdown.strip()) < 100:
-                    log.debug("[%s] skipping near-empty page: %s", entity_id, url)
+                    log.info("[%s] SKIP near-empty: %s", entity_id, url)
                     continue
 
                 title = (result.metadata or {}).get("title", "") if hasattr(result, "metadata") else ""
@@ -556,6 +635,8 @@ async def crawl_entity(entity_id: str, entity: dict, universal: dict,
                     for l in (links.get("external", []) or [])
                 ][:50]  # cap to keep metadata reasonable
 
+                log.info("[%s] page %d: %s (%d chars)",
+                         entity_id, len(pages) + 1, url, len(markdown))
                 pages.append(CrawledPage(
                     url=url,
                     title=title,
@@ -567,13 +648,8 @@ async def crawl_entity(entity_id: str, entity: dict, universal: dict,
     return pages
 
 
-# =============================================================================
-# Embedding via Ollama
-# =============================================================================
-
-
 def embed_batch(texts: list[str], client: ollama.Client) -> list[list[float]]:
-    """Embed a batch of texts. Retries on transient errors."""
+    """Retries on transient errors."""
     last_exc: Exception | None = None
     for attempt in range(cfg.DEFAULT_MAX_RETRIES):
         try:
@@ -590,11 +666,6 @@ def embed_batch(texts: list[str], client: ollama.Client) -> list[list[float]]:
     raise RuntimeError(f"embedding failed after retries: {last_exc}")
 
 
-# =============================================================================
-# ChromaDB
-# =============================================================================
-
-
 def get_chroma_collection() -> chromadb.Collection:
     cfg.CHROMA_DB_PATH.mkdir(parents=True, exist_ok=True)
     client = chromadb.PersistentClient(path=str(cfg.CHROMA_DB_PATH))
@@ -608,11 +679,6 @@ def chunk_id_for(source_url: str, chunk_position: int) -> str:
     """Deterministic chunk ID -- re-runs overwrite same content."""
     raw = f"{source_url}#{chunk_position}".encode("utf-8")
     return hashlib.sha256(raw).hexdigest()[:24]
-
-
-# =============================================================================
-# Page processing pipeline
-# =============================================================================
 
 
 def process_page(
@@ -633,7 +699,6 @@ def process_page(
     is_secondary = url_is_secondary(
         page.url, universal.get("secondary_content_paths", [])
     )
-    freshness, cycle_year = classify_freshness(page.url, page.markdown, universal)
     now_iso = datetime.now(timezone.utc).isoformat()
     entity_name = entity.get("display_name", entity_id)
 
@@ -641,6 +706,10 @@ def process_page(
     for chunk in chunks:
         mentions = extract_mentions(chunk.text)
         content_category = classify_content_category(page.url, chunk.headings)
+        # freshness per-chunk: page-level classification stamped whole pages
+        # cycle_bound off one stray year. Pass URL (for path/URL rules) + this
+        # chunk's own text (for content rules).
+        freshness, cycle_year = classify_freshness(page.url, chunk.text, universal)
 
         meta = cfg.ChunkMetadata(
             source_url=page.url,
@@ -667,19 +736,17 @@ def process_page(
             mentioned_amounts=mentions["amounts"],
         )
 
-        # embed entity + heading path + body so context words enter the vector
-        heading_ctx = " > ".join(chunk.headings) if chunk.headings else ""
+        # entity + heading path go into the EMBEDDED text only (proven setup);
+        # stored body stays clean. Gemini already receives institution+section
+        # via the context wrapper at generation time, so prefixing stored text is
+        # redundant and would surface the marker to users.
+        heading_ctx = " > ".join(h for h in chunk.headings if h) if chunk.headings else ""
         prefix = f"{entity_name} | {heading_ctx}".strip(" |")
         embed_text = f"{prefix}\n\n{chunk.text}" if prefix else chunk.text
 
         chunk_id = chunk_id_for(page.url, chunk.chunk_position)
         results.append((chunk_id, chunk.text, embed_text, meta.to_chroma_metadata()))
     return results
-
-
-# =============================================================================
-# Per-entity orchestration
-# =============================================================================
 
 
 async def ingest_entity(
@@ -691,10 +758,7 @@ async def ingest_entity(
     limit: int | None = None,
     dry_run: bool = False,
 ) -> dict[str, int]:
-    """
-    End-to-end ingestion for one entity.
-    Returns counters: {"pages": N, "chunks": M, "embedded": K}.
-    """
+    """Crawl -> chunk -> embed -> upsert for one entity. Returns counters."""
     counters = {"pages": 0, "chunks": 0, "embedded": 0, "errors": 0}
 
     pages = await crawl_entity(entity_id, entity, universal, limit=limit)
@@ -702,11 +766,11 @@ async def ingest_entity(
     if not pages:
         return counters
 
-    # Process pages to chunks
     all_records: list[tuple[str, str, str, dict]] = []
     for page in pages:
         try:
             recs = process_page(page, entity_id, entity, universal)
+            log.info("[%s] %d chunks <- %s", entity_id, len(recs), page.url)
             all_records.extend(recs)
         except Exception as exc:
             counters["errors"] += 1
@@ -719,6 +783,15 @@ async def ingest_entity(
 
     # embed embed_text (enriched) but store store_text (clean body)
     assert ollama_client is not None and collection is not None
+
+    # drop existing chunks for each URL first: ids are url#position, so a
+    # page that shrank on re-crawl would otherwise leave stale orphans
+    for page in pages:
+        try:
+            collection.delete(where={"source_url": page.url})
+        except Exception as exc:
+            log.warning("[%s] stale-chunk delete failed for %s: %s",
+                        entity_id, page.url, exc)
     for i in range(0, len(all_records), cfg.EMBEDDING_BATCH_SIZE):
         batch = all_records[i:i + cfg.EMBEDDING_BATCH_SIZE]
         ids = [r[0] for r in batch]
@@ -744,11 +817,6 @@ async def ingest_entity(
             log.error("[%s] chroma upsert failed: %s", entity_id, exc)
     log.info("[%s] embedded+stored %d chunks", entity_id, counters["embedded"])
     return counters
-
-
-# =============================================================================
-# Main
-# =============================================================================
 
 
 def load_entities_config() -> dict:
@@ -777,7 +845,6 @@ async def main_async(args: argparse.Namespace) -> int:
         log.info("ollama host: %s", cfg.OLLAMA_HOST)
         log.info("chroma path: %s", cfg.CHROMA_DB_PATH)
         ollama_client = ollama.Client(host=cfg.OLLAMA_HOST)
-        # Sanity check: model is pulled
         try:
             ollama_client.show(cfg.EMBEDDING_MODEL)
         except Exception as exc:

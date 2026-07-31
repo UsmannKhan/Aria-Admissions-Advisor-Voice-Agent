@@ -17,12 +17,10 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Load project-root .env
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 from faster_whisper import WhisperModel
 
-# whisper model and default language
 MODEL_SIZE = "large-v3"
 LANGUAGE = "en" 
 
@@ -38,12 +36,11 @@ def load_model(model_size: str = MODEL_SIZE) -> WhisperModel:
 
 def transcribe(audio_path: str, model: WhisperModel | None = None,
                language: str = LANGUAGE) -> str:
-    """Transcribe an audio file to text. Reuses a passed-in model if given,
-    else loads one"""
+    """Reuses a passed-in model if given, else loads one."""
     if model is None:
         model = load_model()
     segments, info = model.transcribe(audio_path, language=language)
-    # segments is a generator; join the pieces into one transcript.
+    # segments is a generator
     text = " ".join(seg.text.strip() for seg in segments).strip()
     return text
 

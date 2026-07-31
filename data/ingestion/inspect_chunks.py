@@ -7,7 +7,7 @@ async def main():
     with open(cfg.ENTITIES_CONFIG_PATH, encoding="utf-8") as f:
         data = json.load(f)
     universal = data["universal_settings"]
-    for eid in ["lums", "habib"]:
+    for eid in ["lums", "nust", "sat", "hec_nbs", "hec_ehsaas"]:
         entity = data["entities"][eid]
         pages = await crawl_entity(eid, entity, universal, limit=1)
         for page in pages:
