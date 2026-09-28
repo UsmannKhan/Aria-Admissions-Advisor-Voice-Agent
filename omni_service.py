@@ -1,16 +1,12 @@
 """
-OmniVoice Urdu TTS microservice. Runs in the separate omni-venv (its deps
-conflict with the main pipeline). The main server calls this over HTTP only
-for Urdu answers.
+OmniVoice Urdu TTS service. Runs in its own omni-venv (dependency clash with
+the main env); server.py calls it over HTTP for Urdu answers.
 
-Run (in omni-venv, from project root):
     omni-venv\\Scripts\\activate
     uvicorn omni_service:app --host 127.0.0.1 --port 8800
 
-this service only holds the GPU for the duration of a /synthesize call and offloads
-to CPU after. The main server must offload Whisper before calling.
-
-Voice: clones data/audio/sample/urdu_sample.wav for a consistent Urdu voice.
+Holds the GPU only during /synthesize, then offloads to CPU; the main server
+must offload Whisper first. Voice cloned from data/audio/sample/urdu_sample.wav.
 """
 
 from __future__ import annotations
@@ -20,6 +16,14 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+PROJECT_ROOT = Path(__file__).resolve().parent
+
+# before torch: huggingface_hub reads HF_TOKEN at import, and without it
+# downloads are unauthenticated and rate-limited
+load_dotenv(PROJECT_ROOT / ".env")
+
 import torch
 import numpy as np
 import soundfile as sf
@@ -27,10 +31,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-PROJECT_ROOT = Path(__file__).resolve().parent
 REF_AUDIO = PROJECT_ROOT / "data" / "audio" / "sample" / "urdu_sample.wav"
-# Transcript of REF_AUDIO. Passing it saves OmniVoice from loading its own
-# Whisper to transcribe the reference.
+# transcript of REF_AUDIO, so OmniVoice doesn't load its own Whisper to get it
 REF_TEXT = "آرٹیفیشل انٹیلیجنس اور جدید ٹیکنالوجی نے ہمارے کام کرنے کے انداز کو مکمل طور پر بدل دیا ہے۔ اب ہم اس نئے سسٹم کے ذریعے، اپنی آواز کو مزید بہتر اور واضح بنا سکتے ہیں۔"
 SAMPLE_RATE = 24000
 

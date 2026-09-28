@@ -143,6 +143,7 @@ KNOWN_SCHOLARSHIPS = [
 KNOWN_EXAMS = [
     "MDCAT", "NUST NET", "NET", "SAT", "ACT",
     "ECAT", "LCAT", "GAT",
+    "NTS NAT", "NAT-IE", "NAT-ICS",
     "SBASSE Subject Test", "LGAT", "LAT",
     "BCAT", "FAST Entry Test", "FAST NU Entry Test",
     "GIKI Admissions Test", "GCAT",

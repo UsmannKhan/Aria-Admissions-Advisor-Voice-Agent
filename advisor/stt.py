@@ -1,13 +1,11 @@
 """
-Standalone English STT via faster-whisper. Transcribes an audio file.
-
-Isolated stage, like tts.py. main.py will chain this on the front:
-audio -> transcribe -> retrieve -> generate -> speak.
+Speech to text with faster-whisper. The language comes from the caller (the
+UI toggle): auto-detect reads Urdu as Hindi.
 
     python stt.py recording.wav
-    python stt.py query.mp3 --model large-v3-turbo
+    python stt.py query.mp3 --model large-v3-turbo --language ur
 
-Models download on first run
+Models download on first run.
 """
 
 from __future__ import annotations

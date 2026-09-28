@@ -285,109 +285,81 @@
         "hec_nbs"
       ]
     },
-    "habib": {
+    "fast": {
       "type": "university",
-      "display_name": "Habib University",
+      "display_name": "FAST University",
       "crawl": {
         "root_urls": [
           {
-            "url": "https://habib.edu.pk/admissions/",
+            "url": "https://www.nu.edu.pk/Admissions/EligibilityCriteria",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/admissions/admissions-faqs/",
+            "url": "https://www.nu.edu.pk/Admissions/Schedule",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/admissions/international-examination-board/",
+            "url": "https://www.nu.edu.pk/Admissions/HowToApply",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/admissions/international-examination-board/admission-prerequisites/",
+            "url": "https://www.nu.edu.pk/Admissions/TestPattern",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/admissions/international-examination-board/admission-schedule/",
+            "url": "https://www.nu.edu.pk/Admissions/FeeStructure",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/admissions/international-examination-board/entrance-examination/",
+            "url": "https://www.nu.edu.pk/Admissions/Scholarship",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/admissions/national-examination-boards/",
+            "url": "https://www.nu.edu.pk/Admissions/FAQ",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/admissions/national-examination-boards/hueop/",
+            "url": "https://www.nu.edu.pk/Degree-Programs",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/admissions/student-finance/",
+            "url": "https://www.nu.edu.pk/Program/BS(CS)",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/admissions/student-finance-guidebook/",
+            "url": "https://www.nu.edu.pk/Program/BS(AI)",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/admissions/transfer-students/",
+            "url": "https://www.nu.edu.pk/Program/BS(DS)",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/academics/",
+            "url": "https://www.nu.edu.pk/Program/BS(SE)",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/academics/sse/",
+            "url": "https://www.nu.edu.pk/Program/BS(CY)",
             "depth": 0
           },
           {
-            "url": "https://habib.edu.pk/academics/sse/electrical-engineering/",
-            "depth": 0
-          },
-          {
-            "url": "https://habib.edu.pk/academics/sse/computer-engineering/",
-            "depth": 0
-          },
-          {
-            "url": "https://habib.edu.pk/academics/sse/computer-science/",
-            "depth": 0
-          },
-          {
-            "url": "https://habib.edu.pk/academics/ahss/",
-            "depth": 0
-          },
-          {
-            "url": "https://habib.edu.pk/academics/ahss/social-development-and-policy/",
-            "depth": 0
-          },
-          {
-            "url": "https://habib.edu.pk/academics/ahss/communication-and-design/",
-            "depth": 0
-          },
-          {
-            "url": "https://habib.edu.pk/academics/ahss/comparative-humanities/",
-            "depth": 0
-          },
-          {
-            "url": "https://habib.edu.pk/habib-core/",
+            "url": "https://www.nu.edu.pk/Program/BS(EE)",
             "depth": 0
           }
         ],
         "depth": 0,
         "allowed_domains": [
-          "habib.edu.pk"
+          "www.nu.edu.pk",
+          "nu.edu.pk"
         ],
         "allowed_path_patterns": [],
         "additional_excluded_paths": [],
-        "max_pages": 40,
+        "max_pages": 20,
         "ssl_verify": true,
-        "rate_limit_per_domain_seconds": 5.0
+        "rate_limit_per_domain_seconds": 4.0
       },
       "linked_entity_ids": [
-        "sat",
-        "hec_nbs"
+        "sat"
       ]
     },
     "nust": {
@@ -549,6 +521,18 @@
           },
           {
             "url": "https://seecs.nust.edu.pk/department-page/bachelors-of-science-in-computer-science-bscs/",
+            "depth": 0
+          },
+          {
+            "url": "https://seecs.nust.edu.pk/program/bachelor-of-science-in-artificial-intelligence-for-fall-2025-on-wards",
+            "depth": 0
+          },
+          {
+            "url": "https://seecs.nust.edu.pk/program/bachelor-of-science-in-data-science-for-fall-2025-onwards",
+            "depth": 0
+          },
+          {
+            "url": "https://seecs.nust.edu.pk/program/bachelor-of-software-engineering-for-fall-2025-onward",
             "depth": 0
           },
           {

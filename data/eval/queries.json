@@ -1,0 +1,1665 @@
+[
+  {
+    "id": "Q001",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "What is the deadline to submit the LUMS undergraduate online application for Fall 2026?",
+    "gt": "January 27, 2026, 5:00 pm PKT (documents and fee by January 28, 2026)",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://admission.lums.edu.pk/critical-dates-all-programmes"
+    ],
+    "probes": "single date fact; deadline already passed at eval time -> should be stated as past"
+  },
+  {
+    "id": "Q002",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "How much is the LUMS application processing fee?",
+    "gt": "PKR 11,500 (USD 200 for international applicants)",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "single fee figure"
+  },
+  {
+    "id": "Q003",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "LUMS BS CS ki pehle saal ki total fees kitni hai?",
+    "gt": "Total first-year fee PKR 2,182,200 (tuition 1,557,200 = 824,400 Fall + 732,800 Spring; admission fee 176,600)",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "fee table retrieval; roman-urdu input; V2 arithmetic on tuition total"
+  },
+  {
+    "id": "Q004",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "لمز میں بی ایس کمپیوٹر سائنس کے لیے کون سے داخلہ ٹیسٹ قبول ہیں؟",
+    "gt": "SAT, ACT, or LUMS Common Admission Test (LCAT) -- one of the three",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "Urdu-script query; the Test Requirements chunk (previously a retrieval near-miss)"
+  },
+  {
+    "id": "Q005",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "Which A-Level grades does LUMS require for BS Computer Science?",
+    "gt": "At least three full-credit A-Level subjects with an average of 2 Bs and 1 C across the best three; O Levels in at least 8 subjects with average grade B",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "eligibility detail split across chunks"
+  },
+  {
+    "id": "Q006",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "LUMS mein hostel ka kharcha kitna hai per semester?",
+    "gt": "Double occupancy PKR 98,800 per semester; triple occupancy (bigger room) 71,900",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "fee table secondary rows"
+  },
+  {
+    "id": "Q007",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "sat"
+    ],
+    "query": "What is the last date to take the SAT for LUMS Fall 2026 admission?",
+    "gt": "March 14, 2026",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://admission.lums.edu.pk/critical-dates-all-programmes"
+    ],
+    "probes": "exam deadline owned by the university page, not the exam body"
+  },
+  {
+    "id": "Q008",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "ایل سی اے ٹی کا فارمیٹ کیا ہے اور اس میں کتنے سیکشن ہوتے ہیں؟",
+    "gt": "Paper-based, multiple choice; 4 sections (two verbal, two math), 40 minutes each, about 3 hours total; calculators not allowed",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "test-format detail in Urdu"
+  },
+  {
+    "id": "Q009",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "sat"
+    ],
+    "query": "Does LUMS accept SAT scores from a test taken in 2023?",
+    "gt": "No -- SAT taken before March 2024 is not considered for Fall 2026 admissions",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "yes/no with a date condition; overreach trap"
+  },
+  {
+    "id": "Q010",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "sat"
+    ],
+    "query": "LUMS ko SAT score bhejne ka college code kya hai?",
+    "gt": "College code 0513 for SAT (7896 for ACT); scores must be sent directly by the testing agency",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "small exact fact; numeric"
+  },
+  {
+    "id": "Q011",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "LUMS NOP scholarship kya hai aur apply karne ki last date kya thi?",
+    "gt": "National Outreach Programme: full financial assistance for talented students from across Pakistan; NOP online application deadline March 10, 2026 (documents March 13); free to apply",
+    "gt_url": [
+      "https://nop.lums.edu.pk/",
+      "https://nop.lums.edu.pk/faqs-nop"
+    ],
+    "probes": "scholarship on a subdomain; roman-urdu"
+  },
+  {
+    "id": "Q012",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "How many merit scholarships does LUMS offer to undergraduates and what do they cover?",
+    "gt": "100 merit scholarships; partial to full tuition for one year; awarded to top applicants shortlisted for each school",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://financial-aid.lums.edu.pk/financial-aid-options-fa"
+    ],
+    "probes": "count + coverage"
+  },
+  {
+    "id": "Q013",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "لمز کی نیڈ بیسڈ فنانشل ایڈ ٹیوشن فیس کا کتنا حصہ کور کرتی ہے؟",
+    "gt": "Between 20% and 100% of tuition; given as a fee waiver and/or interest-free loan; reassessed each year",
+    "gt_url": [
+      "https://financial-aid.lums.edu.pk/financial-aid-options-fa"
+    ],
+    "probes": "range figure in Urdu"
+  },
+  {
+    "id": "Q014",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "When does LUMS announce undergraduate admission decisions and when do classes start?",
+    "gt": "Decisions April 2026 - July 2026; classes commence September 2026",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "two dates from one table"
+  },
+  {
+    "id": "Q015",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "Do I need an IBCC equivalence certificate to apply to LUMS?",
+    "gt": "Yes, if your qualification does not lead to Matric/FA/ICS/ICOM/FSc (e.g. O/A Level, IB, HSD)",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "conditional yes; FAQ chunk"
+  },
+  {
+    "id": "Q016",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "LUMS mein undergraduate admission saal mein kitni baar hota hai? Kya Spring mein apply kar sakte hain?",
+    "gt": "Once a year; freshmen admitted to the Fall semester only",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "negative answer from FAQ prose"
+  },
+  {
+    "id": "Q017",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "What is the deadline for the LUMS financial aid application?",
+    "gt": "February 28, 2026, 11:59 pm PKT; the financial aid tab opens November 11, 2025 once the admission application and fee are done",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://admission.lums.edu.pk/critical-dates-all-programmes"
+    ],
+    "probes": "aid deadline distinct from admission deadline"
+  },
+  {
+    "id": "Q018",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "لمز کے لیے کتنی ٹیچر ایویلیوایشنز درکار ہیں؟",
+    "gt": "Minimum two, from teachers at the current or last institute; school counsellor recommendations are not acceptable",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "Urdu; FAQ detail"
+  },
+  {
+    "id": "Q019",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "What is the minimum percentage required to apply to NUST undergraduate programmes?",
+    "gt": "Minimum 60% aggregate marks each in SSC and HSSC (or equivalent per IBCC)",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/eligibility-criteria-for-ug-programmes/"
+    ],
+    "probes": "threshold"
+  },
+  {
+    "id": "Q020",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "NUST ke merit mein NET ka weightage kitna hota hai?",
+    "gt": "NET 75%, HSSC 15%, SSC 10%",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/merit-criteria-for-admission-on-net-basis/"
+    ],
+    "probes": "three percentages; V2 material"
+  },
+  {
+    "id": "Q021",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "What subjects are in the NET-Engineering paper and what are their weightings?",
+    "gt": "Mathematics 50%, Physics 30%, English 20%; used for engineering and computing programmes",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/subjects-included-in-net-with-weightings/"
+    ],
+    "probes": "weightings table"
+  },
+  {
+    "id": "Q022",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "نسٹ میں 2026-27 کے لیے انجینئرنگ اور کمپیوٹنگ پروگرامز کی فی سمسٹر ٹیوشن فیس کتنی ہے؟",
+    "gt": "PKR 216,750 per semester (plus admission processing fee 35,000, security 10,000, miscellaneous 5,000 per semester)",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/fee-structure/undergraduate-financial-matters/"
+    ],
+    "probes": "Urdu; fee table with the right column (not the 302,950 business column)"
+  },
+  {
+    "id": "Q023",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "How much is the NUST entry test registration fee?",
+    "gt": "Rs 5,000 (or USD 40) per exam for Pakistani/dual nationals; Rs 10,000 for foreign nationals; non-refundable and valid for one series only",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/ug-admission-application-processing-fee/"
+    ],
+    "probes": "fee with conditions"
+  },
+  {
+    "id": "Q024",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "NUST NET 2026 ki Series 2 ki registration dates kya hain?",
+    "gt": "Online registration 14 Dec 2025 - 1 Feb 2026; CBNET 31 Jan - 15 Feb 2026 (Islamabad); PBNET 13-15 Feb 2026 (Karachi)",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/dates-to-remember/"
+    ],
+    "probes": "schedule table row; dates in the past at eval time"
+  },
+  {
+    "id": "Q025",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "Can a pre-medical student apply for BS Computer Science at NUST?",
+    "gt": "Yes -- pre-medical group is listed as eligible for BS CS/DS/AI (with the additional-maths condition); merit via NET-Engineering",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/eligibility-criteria-for-ug-programmes/",
+      "https://nust.edu.pk/admissions/undergraduates/merit-criteria-for-admission-on-net-basis/"
+    ],
+    "probes": "eligibility table with footnote condition"
+  },
+  {
+    "id": "Q026",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust",
+      "sat"
+    ],
+    "query": "کیا نسٹ SAT کی بنیاد پر داخلہ دیتا ہے؟",
+    "gt": "Yes -- ACT/SAT-based seats for national and international categories; merit 75% SAT/ACT + 10% SSC + 15% HSSC (international seats 100% SAT/ACT); 60% SSC/HSSC still required",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/applying-on-the-basis-of-scholastic-aptitude-test-sat/",
+      "https://nust.edu.pk/admissions/undergraduates/merit-criteria-for-admission-on-net-basis/"
+    ],
+    "probes": "Urdu; cross-page (SAT page + merit page)"
+  },
+  {
+    "id": "Q027",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "What is NUST's tuition fee refund policy if I withdraw after classes start?",
+    "gt": "100% up to the 10th day of classes, 80% up to 15th, 60% up to 20th, 50% up to 30th, nothing from the 31st day; admission processing fee never refunded",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/fee-structure/refund-policy/"
+    ],
+    "probes": "schedule table"
+  },
+  {
+    "id": "Q028",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "NUST mein BS Computer Science kaunse campuses par offer hota hai?",
+    "gt": "SEECS Islamabad, NUST Balochistan Campus Quetta (NBC), and Pakistan Navy Engineering College Karachi (PNEC)",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/list-of-ug-programmes-and-institutions/"
+    ],
+    "probes": "list fact"
+  },
+  {
+    "id": "Q029",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust",
+      "sat"
+    ],
+    "query": "What is the last date for NUST to receive ACT/SAT scores for 2026 admission?",
+    "gt": "25 July 2026 (online registration 4 May - 25 July 2026)",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/dates-to-remember/"
+    ],
+    "probes": "date fact"
+  },
+  {
+    "id": "Q030",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "نسٹ کی نیڈ بیسڈ فنانشل ایڈ کے لیے NFAAF فارم کب تک جمع کرانا ہوتا ہے؟",
+    "gt": "Same due date as the online admission application; late submissions are not considered for any financial aid",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/scholarships/need-based-financial-aid/"
+    ],
+    "probes": "Urdu; rule stated relative to another deadline"
+  },
+  {
+    "id": "Q031",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "What makes an applicant ineligible for NUST?",
+    "gt": "Less than 60% in SSC or HSSC; failed or not appeared in any HSSC subject; less than 60% in O/A level per IBCC equivalence; no valid IBCC O-level equivalence at application time; expelled from NUST on disciplinary grounds",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/ineligibility-criteria/"
+    ],
+    "probes": "list of conditions"
+  },
+  {
+    "id": "Q032",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "NUST mein international students ke liye tuition fee kitni hai?",
+    "gt": "USD 5,400 per annum; admission processing USD 600; security deposit USD 250; health facilities USD 120 per annum",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/fee-structure/undergraduate-financial-matters/"
+    ],
+    "probes": "USD table (not the PKR one)"
+  },
+  {
+    "id": "Q033",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "How many credit hours is the BS Artificial Intelligence programme at NUST SEECS?",
+    "gt": "138 credit hours in total (103 + 35)",
+    "gt_url": [
+      "https://seecs.nust.edu.pk/program/bachelor-of-science-in-artificial-intelligence-for-fall-2025-on-wards"
+    ],
+    "probes": "newly added SEECS page; slow_changing after reclassification"
+  },
+  {
+    "id": "Q034",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "نسٹ میں کورس ریپیٹ کرنے کی فیس کتنی ہے؟",
+    "gt": "Rs 11,000 per credit hour",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/fee-structure/other-fee-charges/",
+      "https://nust.edu.pk/admissions/fee-structure/undergraduate-financial-matters/"
+    ],
+    "probes": "Urdu; same figure on two pages"
+  },
+  {
+    "id": "Q035",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "DAE Electrical Technology wale students NUST mein kaunse programmes ke liye apply kar sakte hain?",
+    "gt": "Electrical, Mechatronics, Computer, Software, Environmental and Information Security Engineering; minimum 60% in Matric and DAE; open merit",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/dae-eligibility-criteria/"
+    ],
+    "probes": "table lookup by row"
+  },
+  {
+    "id": "Q036",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "What is the tuition fee per credit hour at FAST for BS programmes?",
+    "gt": "Rs 12,000 per credit hour for 2026-27 (all BS/BBA); admission fee Rs 30,000 once; refundable security Rs 20,000",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/FeeStructure"
+    ],
+    "probes": "programme-neutral fee page"
+  },
+  {
+    "id": "Q037",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "FAST NUCES mein BS Computer Science ke liye kitne percent marks chahiye?",
+    "gt": "SSC 60% minimum, HSSC 50% minimum, with Mathematics studied at HSSC",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "computing group minimums (not the engineering group's 60/60)"
+  },
+  {
+    "id": "Q038",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast",
+      "sat"
+    ],
+    "query": "فاسٹ یونیورسٹی کمپیوٹنگ پروگرامز کے لیے کون سے داخلہ ٹیسٹ قبول کرتی ہے؟",
+    "gt": "One of: FAST-NUCES admission test, SAT, or NTS NAT-IE / NAT-ICS (NTS tests conducted for specific universities not acceptable)",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "Urdu; the JS-expandable eligibility section"
+  },
+  {
+    "id": "Q039",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "What is the admission test weightage in FAST's selection criteria for computing programmes?",
+    "gt": "Admission test 50%, HSSC 40%, SSC 10%",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "three percentages; contrast with engineering group 33/50/17"
+  },
+  {
+    "id": "Q040",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "When do FAST admissions open for Fall 2026 and when is the admission test?",
+    "gt": "Applications May 20 - June 30, 2026; admission tests June 29 - July 10; merit list July 22; classes August 17, 2026",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/Schedule"
+    ],
+    "probes": "the rescued schedule chunk"
+  },
+  {
+    "id": "Q041",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "FAST ke admission test mein negative marking hai? Calculator allowed hai?",
+    "gt": "Yes, there is negative marking; calculators are not allowed",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/TestPattern"
+    ],
+    "probes": "two yes/no facts"
+  },
+  {
+    "id": "Q042",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "What sections are in the FAST admission test for BS CS and their weightage?",
+    "gt": "English 10%, Analytical Skills & IQ 20%, Basic Math 20%, Advanced Math 50%",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/TestPattern"
+    ],
+    "probes": "correct column of a 7-column table"
+  },
+  {
+    "id": "Q043",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "فاسٹ میں میرٹ اسکالرشپ کس کو ملتی ہے اور کیا کور کرتی ہے؟",
+    "gt": "Top three position holders of each examination board and top three on the NU admission merit list of each campus; equal to full tuition fee for four years; requires semester GPA of 3.0 or above",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/Scholarship"
+    ],
+    "probes": "Urdu; eligibility + coverage"
+  },
+  {
+    "id": "Q044",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "How does repayment of the FAST study loan work?",
+    "gt": "Interest-free; repayment starts three months after graduation or on getting employment, whichever is earlier; repaid within four years",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/Scholarship"
+    ],
+    "probes": "the footer-rescued chunk"
+  },
+  {
+    "id": "Q045",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast",
+      "sat"
+    ],
+    "query": "FAST ka SAT scores receive karne ka institution code kya hai?",
+    "gt": "4575",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/HowToApply"
+    ],
+    "probes": "the footer-rescued SAT paragraph"
+  },
+  {
+    "id": "Q046",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "Is a pre-medical student eligible for FAST's computing programmes?",
+    "gt": "Yes, if they have passed additional mathematics (or are awaiting its result)",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "conditional yes"
+  },
+  {
+    "id": "Q047",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "What is FAST's fee refund policy?",
+    "gt": "Tuition: 100% up to 10th day of classes, 80% to 15th, 60% to 20th, 50% to 30th, none from 31st; admission fee non-refundable; security deposit refundable",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/FeeStructure"
+    ],
+    "probes": "schedule table"
+  },
+  {
+    "id": "Q048",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "فاسٹ یونیورسٹی میں انجینئرنگ پروگرامز کے لیے کتنے فیصد مارکس چاہییں؟",
+    "gt": "SSC 60% and HSSC 60% minimum with Pre-Engineering or ICS subjects; selection weightage test 33%, HSSC 50%, SSC 17%",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "engineering group (different minimums from computing)"
+  },
+  {
+    "id": "Q049",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "FAST mein apply kaise karte hain? Kya paper form bhej sakte hain?",
+    "gt": "Online only through the admission portal; applications by post or by hand are not accepted; an Application Reference Number is assigned; admit card after paying the fee",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/HowToApply"
+    ],
+    "probes": "process facts"
+  },
+  {
+    "id": "Q050",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "FAST ki Sindh endowment scholarship mein rural students ka quota kitna hai?",
+    "gt": "60% rural, 40% urban; need-cum-merit; full tuition for the programme duration, renewable yearly",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/Scholarship"
+    ],
+    "probes": "quota figures"
+  },
+  {
+    "id": "Q051",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "فاسٹ میں بی ایس سی ایس کتنے سمسٹرز کا ہے؟",
+    "gt": "Eight semesters over four years of full-time study",
+    "gt_url": [
+      "https://www.nu.edu.pk/Program/BS(CS)"
+    ],
+    "probes": "Urdu; programme page basics"
+  },
+  {
+    "id": "Q052",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "multi",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "LUMS mein BS CS ke liye eligibility kya hai aur pehle saal ki fee kitni hai?",
+    "gt": "Matric 70% + FSc/ICS 70% (or A-Level 2B1C etc.); first-year total PKR 2,182,200",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "admissions + cost split; two agents, one institution"
+  },
+  {
+    "id": "Q053",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "multi",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "Which tests does NUST accept for BS Computer Science and how much does the test cost?",
+    "gt": "NUST Entry Test (NET-Engineering paper) or SAT/ACT basis; NET fee Rs 5,000 per exam",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/subjects-included-in-net-with-weightings/",
+      "https://nust.edu.pk/admissions/undergraduates/applying-on-the-basis-of-scholastic-aptitude-test-sat/",
+      "https://nust.edu.pk/admissions/undergraduates/ug-admission-application-processing-fee/"
+    ],
+    "probes": "exams + cost split"
+  },
+  {
+    "id": "Q054",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "multi",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "فاسٹ میں بی ایس سی ایس کی فیس کیا ہے اور 2026 میں درخواست دینے کی آخری تاریخ کیا ہے؟",
+    "gt": "Rs 12,000 per credit hour; applications May 20 - June 30, 2026",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/FeeStructure",
+      "https://www.nu.edu.pk/Admissions/Schedule"
+    ],
+    "probes": "Urdu; cost + admissions split"
+  },
+  {
+    "id": "Q055",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "multi",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "sat"
+    ],
+    "query": "What are the LUMS SAT and ACT deadlines, and what financial aid can I get?",
+    "gt": "SAT by March 14, 2026; ACT by April 11, 2026; 100 merit scholarships and need-based aid covering 20-100% of tuition",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://financial-aid.lums.edu.pk/financial-aid-options-fa"
+    ],
+    "probes": "exams + cost; three-way split possible"
+  },
+  {
+    "id": "Q056",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "multi",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "NUST mein minimum marks kitne chahiye aur financial aid ke liye kya karna hota hai?",
+    "gt": "60% each in SSC and HSSC; submit the NFAAF online by the admission application deadline; applying for external scholarships (PEEF, BEEF etc.) is mandatory",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/eligibility-criteria-for-ug-programmes/",
+      "https://nust.edu.pk/admissions/scholarships/need-based-financial-aid/"
+    ],
+    "probes": "admissions + cost"
+  },
+  {
+    "id": "Q057",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "multi",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "How much does the LCAT cost and when is it held?",
+    "gt": "LCAT registration fee PKR 6,500; held once, February 15, 2026 (tentative)",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://admission.lums.edu.pk/critical-dates-all-programmes"
+    ],
+    "probes": "exams + cost"
+  },
+  {
+    "id": "Q058",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "multi",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "نسٹ میں ٹیوشن فیس کتنی ہے اور کیا قسطوں میں ادا کی جا سکتی ہے؟",
+    "gt": "PKR 216,750 per semester for engineering/computing; an installment facility exists but not for admission or first-semester dues",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/fee-structure/undergraduate-financial-matters/",
+      "https://nust.edu.pk/admissions/scholarships/need-based-financial-aid/"
+    ],
+    "probes": "Urdu; fee + aid rule"
+  },
+  {
+    "id": "Q059",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "multi",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "What is the FAST entry test pattern and what percentage do I need in FSc to apply for BS AI?",
+    "gt": "English 10%, Analytical 20%, Basic Math 20%, Advanced Math 50%, with negative marking; HSSC 50% minimum (SSC 60%) with Mathematics",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/TestPattern",
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "exams + admissions"
+  },
+  {
+    "id": "Q060",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "comparison",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "nust"
+    ],
+    "query": "Compare the first-year cost of BS Computer Science at LUMS and NUST.",
+    "gt": "LUMS first year total PKR 2,182,200 (tuition 1,557,200); NUST tuition 216,750 per semester plus 35,000 admission processing and 10,000 security; bases differ (annual vs per-semester) and must be stated",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://nust.edu.pk/admissions/fee-structure/undergraduate-financial-matters/"
+    ],
+    "probes": "headline comparison; fee-basis rule must fire"
+  },
+  {
+    "id": "Q061",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "comparison",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "fast"
+    ],
+    "query": "LUMS aur FAST mein CS ke liye minimum marks ka kya farq hai?",
+    "gt": "LUMS: Matric 70% and FSc/ICS 70%; FAST: SSC 60% and HSSC 50% with Mathematics",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "per-entity retrieval; different page regimes"
+  },
+  {
+    "id": "Q062",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "comparison",
+    "expect": "answer",
+    "entities": [
+      "nust",
+      "fast",
+      "sat"
+    ],
+    "query": "نسٹ اور فاسٹ میں سے کون اپنا ٹیسٹ لیتا ہے اور کون SAT بھی قبول کرتا ہے؟",
+    "gt": "Both run their own test (NUST NET; FAST-NUCES test) and both also accept the SAT",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/applying-on-the-basis-of-scholastic-aptitude-test-sat/",
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "Urdu comparison"
+  },
+  {
+    "id": "Q063",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "comparison",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "fast"
+    ],
+    "query": "Which is cheaper per credit hour, LUMS or FAST?",
+    "gt": "FAST: Rs 12,000 per credit hour; LUMS: PKR 45,800 per credit hour",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://www.nu.edu.pk/Admissions/FeeStructure"
+    ],
+    "probes": "two figures, direct comparison"
+  },
+  {
+    "id": "Q064",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "comparison",
+    "expect": "answer",
+    "entities": [
+      "nust",
+      "fast"
+    ],
+    "query": "Compare the admission test weightage in merit at NUST and FAST for computing programmes.",
+    "gt": "NUST: NET 75% (HSSC 15%, SSC 10%); FAST: admission test 50% (HSSC 40%, SSC 10%)",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/merit-criteria-for-admission-on-net-basis/",
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "percentages"
+  },
+  {
+    "id": "Q065",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "comparison",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "nust"
+    ],
+    "query": "LUMS aur NUST ki 2026 admission ki application deadlines compare karo.",
+    "gt": "LUMS: January 27, 2026; NUST: NET in series, last series registration 26 Apr - 18 Jun 2026; SAT/ACT basis registration until 25 July 2026",
+    "gt_url": [
+      "https://admission.lums.edu.pk/critical-dates-all-programmes",
+      "https://nust.edu.pk/admissions/undergraduates/dates-to-remember/"
+    ],
+    "probes": "dates across two regimes; several past at eval time"
+  },
+  {
+    "id": "Q066",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "comparison",
+    "expect": "answer",
+    "entities": [
+      "nust",
+      "fast"
+    ],
+    "query": "How do the fee refund policies of NUST and FAST compare?",
+    "gt": "Identical schedules: 100% up to day 10, 80% to day 15, 60% to day 20, 50% to day 30, none after; both keep the admission fee",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/fee-structure/refund-policy/",
+      "https://www.nu.edu.pk/Admissions/FeeStructure"
+    ],
+    "probes": "agreement case -- conflict detector must NOT fire"
+  },
+  {
+    "id": "Q067",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "comparison",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "nust"
+    ],
+    "query": "لمز اور نسٹ ACT اسکور کے بارے میں کیا شرائط رکھتے ہیں؟",
+    "gt": "LUMS: accepts ACT, deadline April 11, 2026, ACT before February 2024 not considered, code 7896; NUST: ACT composite minimum 25 for engineering (Maths, English, Reading; science portion 25), 75% merit weight",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://nust.edu.pk/admissions/undergraduates/applying-on-the-basis-of-scholastic-aptitude-test-sat/",
+      "https://nust.edu.pk/admissions/undergraduates/merit-criteria-for-admission-on-net-basis/"
+    ],
+    "probes": "Urdu; cross-institution exam rules"
+  },
+  {
+    "id": "Q068",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "comparison",
+    "expect": "partial",
+    "entities": [
+      "lums",
+      "nust"
+    ],
+    "query": "Compare hostel costs at LUMS and NUST.",
+    "gt": "LUMS: 98,800 (double) / 71,900 (triple) per semester; NUST hostel fees are NOT in the corpus (page links out) -- must say so for NUST by name",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://nust.edu.pk/admissions/fee-structure/hostel-accommodation/"
+    ],
+    "probes": "attribute-level abstention: one side answerable, the other not"
+  },
+  {
+    "id": "Q069",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "enumeration",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "nust",
+      "fast",
+      "sat"
+    ],
+    "query": "Which universities accept the SAT for undergraduate admission?",
+    "gt": "LUMS, NUST and FAST all accept the SAT (each with its own conditions); coverage note that only these are covered",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://nust.edu.pk/admissions/undergraduates/applying-on-the-basis-of-scholastic-aptitude-test-sat/",
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "three-institution enumeration; coverage note expected"
+  },
+  {
+    "id": "Q070",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "enumeration",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "nust",
+      "fast"
+    ],
+    "query": "Kaunsi universities apna entry test khud leti hain?",
+    "gt": "LUMS (LCAT), NUST (NET), FAST (FAST-NUCES admission test)",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://nust.edu.pk/admissions/undergraduates/subjects-included-in-net-with-weightings/",
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "enumeration by own-test"
+  },
+  {
+    "id": "Q071",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "enumeration",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "nust",
+      "fast"
+    ],
+    "query": "کون سی یونیورسٹیاں ACT قبول کرتی ہیں؟",
+    "gt": "LUMS and NUST accept the ACT; FAST's options are its own test, SAT, or NTS NAT",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science",
+      "https://nust.edu.pk/admissions/undergraduates/applying-on-the-basis-of-scholastic-aptitude-test-sat/",
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "Urdu enumeration with a true negative (FAST)"
+  },
+  {
+    "id": "Q072",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "enumeration",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "Which computing programmes does FAST offer?",
+    "gt": "BS Artificial Intelligence, Computer Science, Cyber Security, Data Science, Software Engineering",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "list within one institution"
+  },
+  {
+    "id": "Q073",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "enumeration",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "nust",
+      "fast"
+    ],
+    "query": "Which universities accept the NTS NAT?",
+    "gt": "FAST (NAT-IE / NAT-ICS for computing; also ICOM/IGS for business); LUMS and NUST do not list NAT",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "enumeration with single positive"
+  },
+  {
+    "id": "Q074",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "enumeration",
+    "expect": "answer",
+    "entities": [
+      "nust",
+      "fast"
+    ],
+    "query": "Kin universities mein BS Artificial Intelligence offer hota hai?",
+    "gt": "NUST (SEECS Islamabad and NUST Balochistan Campus Quetta) and FAST",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/list-of-ug-programmes-and-institutions/",
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "programme enumeration"
+  },
+  {
+    "id": "Q075",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "enumeration",
+    "expect": "answer",
+    "entities": [
+      "lums",
+      "nust",
+      "fast"
+    ],
+    "query": "What scholarships could a student with Punjab domicile apply for at these universities?",
+    "gt": "PEEF (Punjab domicile, 60% intermediate, household income up to Rs 60,000/month) and Punjab Honhaar -- listed by LUMS, NUST and FAST",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/scholarships/punjab-educational-endowment-fund-peef-scholarships/",
+      "https://www.nu.edu.pk/Admissions/Scholarship",
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "scholarship enumeration across institutions"
+  },
+  {
+    "id": "Q076",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "scholarship",
+    "expect": "answer",
+    "entities": [
+      "hec_nbs"
+    ],
+    "query": "How do I apply for the HEC Need-Based Scholarship?",
+    "gt": "Get the form from the Financial Aid Office of the participating university and submit it there with documents; HEC does not accept applications directly; funds are paid through the university",
+    "gt_url": [
+      "https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/How-To-Apply.aspx"
+    ],
+    "probes": "authority page; process"
+  },
+  {
+    "id": "Q077",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "scholarship",
+    "expect": "answer",
+    "entities": [
+      "hec_nbs"
+    ],
+    "query": "ایچ ای سی نیڈ بیسڈ اسکالرشپ کیا کور کرتی ہے؟",
+    "gt": "University fee and a stipend",
+    "gt_url": [
+      "https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/Financial-Support.aspx"
+    ],
+    "probes": "Urdu; short authority fact"
+  },
+  {
+    "id": "Q078",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "scholarship",
+    "expect": "answer",
+    "entities": [
+      "hec_nbs",
+      "lums"
+    ],
+    "query": "Is the HEC need-based scholarship available at LUMS?",
+    "gt": "HEC NBS is for HEC-selected PUBLIC sector universities; LUMS is private and is not listed -- LUMS has its own need-based aid instead",
+    "gt_url": [
+      "https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/Eligibility-Criteria.aspx",
+      "https://financial-aid.lums.edu.pk/financial-aid-options-fa"
+    ],
+    "probes": "cross-authority reasoning; must not overreach"
+  },
+  {
+    "id": "Q079",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "scholarship",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "PEEF scholarship ke liye income limit kya hai?",
+    "gt": "Monthly household income not more than Rs 60,000; Punjab domicile; at least 60% in intermediate; not holding another scholarship",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/scholarships/punjab-educational-endowment-fund-peef-scholarships/"
+    ],
+    "probes": "threshold on a university-hosted authority page"
+  },
+  {
+    "id": "Q080",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "scholarship",
+    "expect": "answer",
+    "entities": [
+      "hec_ehsaas"
+    ],
+    "query": "What does the Ehsaas undergraduate scholarship cover?",
+    "gt": "Semester tuition fee as per actual plus Rs 40,000 per annum",
+    "gt_url": [
+      "https://www.hec.gov.pk/english/scholarshipsgrants/Ehsaas/Pages/Financial-Support.aspx"
+    ],
+    "probes": "STALE-relevant: the Ehsaas pages describe the 2020/2021 intake; score the hedge as correct iff a cited chunk carries stale_reasons (hedge present) or none does (no hedge)",
+    "stale": true
+  },
+  {
+    "id": "Q081",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "scholarship",
+    "expect": "answer",
+    "entities": [
+      "hec_ehsaas"
+    ],
+    "query": "کیا میں احساس اسکالرشپ کے لیے اہل ہوں اگر مجھے پرائیویٹ یونیورسٹی میں داخلہ ملا ہے؟",
+    "gt": "Ehsaas is for public-sector HEC-recognised universities with merit admission (page refers to Fall 2021); so a private-university admission is not covered as stated",
+    "gt_url": [
+      "https://www.hec.gov.pk/english/scholarshipsgrants/Ehsaas/Pages/Eligibility-Criteria.aspx"
+    ],
+    "probes": "STALE-relevant: the Ehsaas pages describe the 2020/2021 intake; score the hedge as correct iff a cited chunk carries stale_reasons (hedge present) or none does (no hedge)",
+    "stale": true
+  },
+  {
+    "id": "Q082",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "scholarship",
+    "expect": "answer",
+    "entities": [
+      "hec_ehsaas"
+    ],
+    "query": "Ehsaas scholarship ke liye kaun eligible hai?",
+    "gt": "Newly admitted students (Fall 2021 session on the page) in HEC-recognised public universities, admitted on merit, with financial need; ineligible if holding another scholarship or in distance learning",
+    "gt_url": [
+      "https://www.hec.gov.pk/english/scholarshipsgrants/Ehsaas/Pages/Eligibility-Criteria.aspx"
+    ],
+    "probes": "STALE-relevant: the Ehsaas pages describe the 2020/2021 intake; score the hedge as correct iff a cited chunk carries stale_reasons (hedge present) or none does (no hedge)",
+    "stale": true
+  },
+  {
+    "id": "Q083",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "scholarship",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "Can I hold the NUST need-based scholarship and PEEF at the same time?",
+    "gt": "NUST requires applicants for its aid to also apply for external scholarships such as PEEF; PEEF's own rule is that the student must not be availing any other scholarship in the same year -- both rules must be stated, with the student told to confirm",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/scholarships/need-based-financial-aid/",
+      "https://nust.edu.pk/admissions/scholarships/punjab-educational-endowment-fund-peef-scholarships/"
+    ],
+    "probes": "two rules that pull against each other -- conflict adjudication candidate"
+  },
+  {
+    "id": "Q084",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "scholarship",
+    "expect": "answer",
+    "entities": [
+      "nust"
+    ],
+    "query": "NUST financial aid ka faisla kab milta hai?",
+    "gt": "In July/August, in the provisional admission offer letter; the offer can be accepted or declined",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/scholarships/need-based-financial-aid/"
+    ],
+    "probes": "timing fact"
+  },
+  {
+    "id": "Q085",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "scholarship",
+    "expect": "answer",
+    "entities": [
+      "fast"
+    ],
+    "query": "What financial aid does FAST offer besides merit scholarships?",
+    "gt": "Interest-free study loans; external: Sindh Government Endowment, Ignite ICT, BEEF, PEEF, Honhaar, OSAF, FANA, Ihsan Trust, community scholarships",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/Scholarship"
+    ],
+    "probes": "list of schemes"
+  },
+  {
+    "id": "Q086",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "scholarship",
+    "expect": "answer",
+    "entities": [
+      "lums"
+    ],
+    "query": "لمز کا انٹرسٹ فری لون کب واپس کرنا ہوتا ہے؟",
+    "gt": "Six months after graduation; the fee-waiver part is not repaid",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "Urdu; repayment rule"
+  },
+  {
+    "id": "Q087",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "abstain",
+    "entities": [
+      "nust"
+    ],
+    "query": "What are the hostel charges at NUST?",
+    "gt": "NOT IN CORPUS: the hostel page only links out to campuslife.nust.edu.pk; correct behaviour is to say it does not have the figure",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/fee-structure/hostel-accommodation/"
+    ],
+    "probes": "unanswerable-in-corpus (page exists, figure does not)"
+  },
+  {
+    "id": "Q088",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "out_of_scope",
+    "entities": [
+      "habib"
+    ],
+    "query": "Habib University mein CS ki fees kitni hai?",
+    "gt": "Habib is not covered -- must say so rather than answer from another university",
+    "gt_url": [],
+    "probes": "out-of-scope institution (aliased, no chunks)"
+  },
+  {
+    "id": "Q089",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "out_of_scope",
+    "entities": [],
+    "query": "What is the eligibility criteria for computer science at GIKI?",
+    "gt": "GIKI is not covered -- abstain",
+    "gt_url": [],
+    "probes": "out-of-scope institution (no alias)"
+  },
+  {
+    "id": "Q090",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "abstain",
+    "entities": [
+      "sat"
+    ],
+    "query": "SAT کی رجسٹریشن فیس کتنی ہے؟",
+    "gt": "SAT fee amount is NOT in the corpus (only fee-waiver pages); may mention fee waivers exist, must not state a price",
+    "gt_url": [
+      "https://satsuite.collegeboard.org/sat/registration/fee-waivers"
+    ],
+    "probes": "Urdu; exam-body gap; figure invention trap"
+  },
+  {
+    "id": "Q091",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "abstain",
+    "entities": [
+      "nust"
+    ],
+    "query": "How many questions are in the NUST entry test and how long does it take?",
+    "gt": "NOT IN CORPUS: only subject weightings are published on the ingested pages; must not invent counts or duration",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/subjects-included-in-net-with-weightings/"
+    ],
+    "probes": "numeric invention trap"
+  },
+  {
+    "id": "Q092",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "abstain",
+    "entities": [
+      "fast"
+    ],
+    "query": "FAST ke hostel ki fees kya hai?",
+    "gt": "NOT IN CORPUS -- abstain",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/FeeStructure"
+    ],
+    "probes": "unanswerable; neighbouring fee page could tempt a wrong answer"
+  },
+  {
+    "id": "Q093",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "abstain",
+    "entities": [
+      "fast"
+    ],
+    "query": "What is the merit cut-off percentage for BS CS at FAST?",
+    "gt": "Not published: the page says merit cut-off marks are determined by the University; must not state a number",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "honest 'not published' case"
+  },
+  {
+    "id": "Q094",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "abstain",
+    "entities": [
+      "nust"
+    ],
+    "query": "What is the tuition fee for MBBS at NUST?",
+    "gt": "MBBS does not appear in the INGESTED NUST programme list, so the system must not state a fee; whether NUST offers MBBS in the world is not asserted (a medical school may exist unscraped)",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/list-of-ug-programmes-and-institutions/",
+      "https://nust.edu.pk/admissions/fee-structure/undergraduate-financial-matters/"
+    ],
+    "probes": "non-existent programme; fee table tempts a figure"
+  },
+  {
+    "id": "Q095",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "out_of_scope",
+    "entities": [],
+    "query": "یو ای ٹی لاہور میں الیکٹریکل انجینئرنگ کی فیس کتنی ہے؟",
+    "gt": "UET is not covered -- abstain",
+    "gt_url": [],
+    "probes": "Urdu out-of-scope"
+  },
+  {
+    "id": "Q096",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "abstain",
+    "entities": [
+      "lums"
+    ],
+    "query": "LUMS ke BS CS mein kaunse courses parhaye jate hain semester 1 mein?",
+    "gt": "LUMS CS page in the corpus gives entry requirements and fees but no semester-wise course list -- say the curriculum detail is not available",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "coverage gap within an ingested page"
+  },
+  {
+    "id": "Q097",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "decline_predict",
+    "entities": [
+      "lums"
+    ],
+    "query": "Will I get into LUMS BS CS with 75% in FSc?",
+    "gt": "Must not predict; may state 75% meets the published 70% minimum and that admission depends on the full evaluation",
+    "gt_url": [
+      "https://lums.edu.pk/programmes/bs-computer-science"
+    ],
+    "probes": "outcome prediction boundary"
+  },
+  {
+    "id": "Q098",
+    "input_lang": "roman",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "decline_predict",
+    "entities": [
+      "nust"
+    ],
+    "query": "Mere NET mein 120 marks aaye hain, kya mujhe NUST CS mil jayega?",
+    "gt": "Must not predict; may explain merit is NET 75% + HSSC 15% + SSC 10% and cut-offs are not published",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/merit-criteria-for-admission-on-net-basis/"
+    ],
+    "probes": "prediction with a number"
+  },
+  {
+    "id": "Q099",
+    "input_lang": "ur",
+    "lang": "ur",
+    "shape": "lookup",
+    "expect": "decline_predict",
+    "entities": [
+      "fast"
+    ],
+    "query": "میرے میٹرک میں 82 فیصد ہیں، کیا فاسٹ میں داخلہ پکا ہے؟",
+    "gt": "Must not say admission is certain; may state minimums (SSC 60%, HSSC 50%) and that merit cut-off is set by the university",
+    "gt_url": [
+      "https://www.nu.edu.pk/Admissions/EligibilityCriteria"
+    ],
+    "probes": "Urdu boundary"
+  },
+  {
+    "id": "Q100",
+    "input_lang": "en",
+    "lang": "en",
+    "shape": "lookup",
+    "expect": "decline_predict",
+    "entities": [
+      "nust"
+    ],
+    "query": "Is it even worth applying to NUST if I only have 61%?",
+    "gt": "Must not assess chances; may state 61% meets the 60% minimum and explain the merit formula",
+    "gt_url": [
+      "https://nust.edu.pk/admissions/undergraduates/eligibility-criteria-for-ug-programmes/",
+      "https://nust.edu.pk/admissions/undergraduates/merit-criteria-for-admission-on-net-basis/"
+    ],
+    "probes": "discouragement trap -- must not tell the student not to apply"
+  }
+]

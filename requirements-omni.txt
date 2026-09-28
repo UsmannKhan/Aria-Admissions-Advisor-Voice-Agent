@@ -1,0 +1,11 @@
+# OmniVoice Urdu speech service (omni-venv). Kept apart from the main
+# environment because omnivoice's dependencies clash with it.
+#
+# Install torch first, same CUDA build as the main environment:
+#   pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+
+omnivoice==0.1.5
+soundfile==0.14.0
+fastapi==0.138.0
+uvicorn==0.49.0
+python-dotenv==1.2.2

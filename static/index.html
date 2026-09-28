@@ -30,7 +30,7 @@
     display: flex; flex-direction: column;
   }
 
-  /* ---- header ---- */
+  /* header */
   header {
     border-bottom: 1px solid var(--line);
     background: var(--paper);
@@ -38,6 +38,14 @@
     flex: 0 0 auto;
   }
   .header-inner { max-width: 820px; margin: 0 auto; display: flex; align-items: flex-start; gap: 14px; }
+  #new-chat {
+    margin-left: auto; align-self: center; flex: none;
+    background: none; border: 1px solid var(--line); border-radius: 999px;
+    padding: 7px 14px; font: inherit; font-size: 13px; color: var(--muted);
+    cursor: pointer; white-space: nowrap;
+  }
+  #new-chat:hover { color: var(--teal); border-color: var(--teal); }
+  #new-chat span { font-size: 15px; line-height: 1; }
   .avatar {
     width: 40px; height: 40px; border-radius: 12px; flex: 0 0 auto; margin-top: 2px;
     background: var(--teal); color: #fff;
@@ -56,7 +64,7 @@
     font-size: 13px; color: var(--ink-soft); margin-top: 6px; max-width: 60ch;
   }
 
-  /* ---- chat history (scrollable) ---- */
+  /* chat history (scrollable) */
   .chat {
     flex: 1 1 auto; overflow-y: auto;
     padding: 28px 24px 16px;
@@ -89,7 +97,7 @@
   .word { opacity: 0; animation: fadein .26s ease forwards; display: inline-block; }
   @keyframes fadein { to { opacity: 1; } }
 
-  /* intro message – Aria's hello, framed to reinforce verifiability */
+  /* intro message: Aria's hello */
   .intro .answer { background: var(--card); }
   .intro .answer .lead { display: block; margin-bottom: 10px; }
   .intro .verify-note {
@@ -99,7 +107,7 @@
   }
   .intro .verify-note svg { flex: 0 0 auto; margin-top: 2px; }
 
-  /* ---- voice panel (one global, attached under the latest answer) ---- */
+  /* voice panel (one global, attached under the latest answer) */
   .voicepanel {
     display: none; align-items: center; gap: 10px;
     margin-top: 12px;
@@ -127,7 +135,7 @@
   .play:hover { background: var(--teal-dark); }
   .play:disabled { opacity: .55; cursor: default; }
 
-  /* ---- sources + collapsible grounding ---- */
+  /* sources + collapsible grounding */
   .grounding-block { margin-top: 14px; }
   .section-label {
     font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
@@ -178,7 +186,7 @@
   .prov a { color: var(--teal); text-decoration: none; }
   .prov a:hover { text-decoration: underline; }
 
-  /* ---- bottom input bar ---- */
+  /* bottom input bar */
   .composer {
     flex: 0 0 auto; border-top: 1px solid var(--line);
     background: var(--paper); padding: 14px 24px 18px;
@@ -205,7 +213,9 @@
     font-family: 'Inter', sans-serif; font-size: 15px; color: var(--ink);
     line-height: 1.5; max-height: 140px; padding: 6px 0; outline: none;
   }
-  .ask textarea::placeholder { color: #9a9580; }
+  .ask textarea::placeholder {
+    color: #9a9580; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   .icon-btn {
     flex: 0 0 auto; width: 40px; height: 40px; border-radius: 10px;
     border: 1px solid var(--line); background: var(--paper); cursor: pointer;
@@ -243,6 +253,25 @@
   .composer .foot { font-size: 11px; color: var(--ink-soft); margin-top: 10px; text-align: center; }
 
   [dir="rtl"] { text-align: right; }
+
+  /* Phones: the header shrinks to one row and the controls used every turn
+     get 48px touch targets. */
+  @media (max-width: 600px) {
+    header { padding: 10px 16px; }
+    .header-inner { align-items: center; gap: 10px; }
+    .avatar { width: 32px; height: 32px; border-radius: 10px; font-size: 17px; margin-top: 0; }
+    .header-text h1 { font-size: 17px; }
+    .header-text .role { font-size: 10px; margin-top: 1px; }
+    .header-text .tagline { display: none; }
+    #new-chat { padding: 6px 12px; }
+    .chat { padding: 18px 16px 12px; }
+    .composer { padding: 10px 16px 14px; }
+    .ask { padding: 6px 6px 6px 12px; }
+    .ask textarea { font-size: 16px; }   /* below 16px iOS zooms the page on focus */
+    .icon-btn { width: 48px; height: 48px; border-radius: 12px; }
+    .icon-btn svg { width: 22px; height: 22px; }
+    .send { height: 48px; padding: 0 16px; }
+  }
   @media (prefers-reduced-motion: reduce) { .word { animation: none; opacity: 1; } }
 </style>
 </head>
@@ -255,12 +284,15 @@
         <div class="role">Admissions Advisor</div>
         <div class="tagline">Grounded answers on eligibility, fees, and deadlines. Every claim links to its source.</div>
       </div>
+      <button id="new-chat" title="Start a new conversation and forget what you have told Aria">
+        <span aria-hidden="true">+</span> New Chat
+      </button>
     </div>
   </header>
 
   <div class="chat" id="chat">
     <div class="chat-inner" id="chat-inner">
-      <!-- intro message (hardcoded), framed to reinforce verifiability -->
+      <!-- intro message (hardcoded) -->
       <div class="msg aria intro">
         <div class="who">Aria</div>
         <div class="answer">
@@ -284,7 +316,7 @@
         <button id="ask" class="send">Ask</button>
       </div>
       <div class="examples">
-        <button class="chip" data-q="Compare the eligibility criteria for CS at LUMS and Habib">Eligibility: LUMS vs Habib</button>
+        <button class="chip" data-q="Compare the eligibility criteria for CS at LUMS and NUST">Eligibility: LUMS vs NUST</button>
         <button class="chip" data-q="What are the application deadlines for LUMS computer science?">LUMS deadlines</button>
       </div>
       <div class="status" id="status"><span class="dot"></span><span id="status-text">Thinking…</span></div>
@@ -293,7 +325,7 @@
     </div>
   </div>
 
-  <!-- hidden audio fallback element (kept for compatibility) -->
+  <!-- hidden audio fallback element -->
   <audio id="audio" style="display:none"></audio>
 
 <script>
@@ -302,10 +334,15 @@ const qEl = $('q'), askBtn = $('ask'), statusEl = $('status'), statusText = $('s
 const errorEl = $('error');
 const chatInner = $('chat-inner'), chatScroll = $('chat');
 
-// Global audio state operates on the LATEST answer. Each new answer creates a
-// fresh voice panel + waveform in the DOM, and these globals are repointed to it.
-let currentAnswer = '';
-let playBtn = null, playLabel = null, wf = null, wfBars = [];
+// Per-answer voice (text, language, audio) so Replay plays its own answer.
+// Audio is cached (~2 MB per answer): re-synthesising Urdu on OmniVoice can
+// fail while VRAM is busy.
+function makeVoice(text, language, readings) {
+  return { text, language, readings: readings || [], chunks: [], rate: 24000,
+           btn: null, label: null, wf: null, bars: [] };
+}
+// the voice currently playing; only one plays at a time
+let activeVoice = null;
 
 // auto-grow textarea
 qEl.addEventListener('input', () => {
@@ -316,17 +353,43 @@ qEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e
 document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => { qEl.value = c.dataset.q; ask(); }));
 askBtn.addEventListener('click', ask);
 
-// --- language toggle ---
+// one session per page load (the graph keys history and profile on it)
+let sessionId = 'web-' + Math.random().toString(36).slice(2, 10);
+
+// New chat also deletes the old session's checkpoints on the server
+document.getElementById('new-chat').addEventListener('click', async () => {
+  const old = sessionId;
+  sessionId = 'web-' + Math.random().toString(36).slice(2, 10);
+  if (playing || streaming) stopPlayback();
+  // clear activeVoice too, or the last voice that played stays in memory
+  activeVoice = null;
+  document.querySelectorAll('.msg:not(.intro)').forEach(el => el.remove());
+  qEl.value = ''; qEl.style.height = 'auto'; qEl.focus();
+  try { await fetch('/session/' + encodeURIComponent(old), { method: 'DELETE' }); }
+  catch (e) { /* if the delete fails, the old session just stays on disk */ }
+});
+
+// language toggle
 let selectedLang = 'en';
 document.querySelectorAll('.lang-opt').forEach(btn => {
   btn.addEventListener('click', () => {
     selectedLang = btn.dataset.lang;
     document.querySelectorAll('.lang-opt').forEach(b => b.classList.toggle('active', b === btn));
     qEl.dir = selectedLang === 'ur' ? 'rtl' : 'ltr';
+    setPlaceholder();
   });
 });
 
-// --- mic input ---
+// A long hint wraps and clips beside the mic and Ask buttons on a phone.
+const narrow = window.matchMedia('(max-width: 600px)');
+function setPlaceholder() {
+  if (selectedLang === 'ur') { qEl.placeholder = narrow.matches ? 'سوال پوچھیں…' : 'داخلے، فیس یا ڈیڈ لائن کے بارے میں پوچھیں…'; }
+  else { qEl.placeholder = narrow.matches ? 'Ask a question…' : 'Ask about eligibility, deadlines, or compare universities…'; }
+}
+narrow.addEventListener('change', setPlaceholder);
+setPlaceholder();
+
+// mic input
 const micBtn = $('mic');
 let mediaRecorder = null, recChunks = [], recording = false;
 micBtn.addEventListener('click', async () => {
@@ -393,7 +456,7 @@ async function ask() {
   try {
     const res = await fetch('/query', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ text, language: selectedLang })
+      body: JSON.stringify({ text, language: selectedLang, session: sessionId })
     });
     if (!res.ok) throw new Error('Query failed (' + res.status + ').');
     const data = await res.json();
@@ -418,7 +481,6 @@ function appendUserMessage(text, isUrdu) {
 }
 
 function appendAriaMessage(data) {
-  currentAnswer = data.answer;
   const isUrdu = (data.language === 'ur') || (selectedLang === 'ur');
 
   const m = document.createElement('div');
@@ -456,10 +518,11 @@ function appendAriaMessage(data) {
   vp.appendChild(wfEl); vp.appendChild(pBtn);
   m.appendChild(vp);
 
-  // repoint global audio handles to THIS message's panel
-  playBtn = pBtn; playLabel = pLabel; wf = wfEl;
-  wfBars = Array.from(wfEl.querySelectorAll('span'));
-  pBtn.addEventListener('click', () => speakAnswer(false));
+  // this panel's own voice, captured by its own handler
+  const voice = makeVoice(data.answer, isUrdu ? 'ur' : 'en', data.readings);
+  voice.btn = pBtn; voice.label = pLabel; voice.wf = wfEl;
+  voice.bars = Array.from(wfEl.querySelectorAll('span'));
+  pBtn.addEventListener('click', () => speakAnswer(voice, false));
 
   // sources + collapsible grounding
   const gb = buildGrounding(data, isUrdu);
@@ -468,11 +531,10 @@ function appendAriaMessage(data) {
   chatInner.appendChild(m);
   scrollToBottom();
 
-  // reset audio state and auto-speak the latest answer
-  storedChunks = []; scheduledNodes = []; nextStartTime = 0;
-  playing = false; streaming = false;
+  // stop whatever is playing, then play the new answer
+  if (playing || streaming) stopPlayback();
   vp.classList.add('show');
-  speakAnswer(true);
+  speakAnswer(voice, true);
 }
 
 function buildGrounding(data, isUrdu) {
@@ -530,11 +592,12 @@ function buildGrounding(data, isUrdu) {
   return block;
 }
 
-/* ===================== AUDIO ENGINE (unchanged logic) ===================== */
+/* audio engine */
 let audioCtx = null, analyser = null, wfRAF = null;
 let nextStartTime = 0;
 let streaming = false, playing = false;
-let storedChunks = [], storedRate = 24000, scheduledNodes = [], endTimer = null;
+// playback state for whatever is playing now; per-answer state is on each voice
+let scheduledNodes = [], endTimer = null;
 
 function getCtx() {
   if (!audioCtx) {
@@ -546,28 +609,30 @@ function getCtx() {
   }
   return audioCtx;
 }
-function startWaveform() {
-  if (!analyser || !wfBars.length) return;
-  wf.classList.add('playing');
+function startWaveform(v) {
+  if (!analyser || !v || !v.bars.length) return;
+  v.wf.classList.add('playing');
   const bins = new Uint8Array(analyser.frequencyBinCount);
   const draw = () => {
     analyser.getByteFrequencyData(bins);
-    const n = wfBars.length, mid = (n - 1) / 2;
+    const n = v.bars.length, mid = (n - 1) / 2;
     for (let i = 0; i < n; i++) {
       const dist = Math.abs(i - mid);
       const binIdx = Math.min(bins.length - 1, Math.floor(dist * 1.6));
-      const v = bins[binIdx] / 255;
-      wfBars[i].style.height = (5 + v * 38).toFixed(1) + 'px';
+      const val = bins[binIdx] / 255;
+      v.bars[i].style.height = (5 + val * 38).toFixed(1) + 'px';
     }
     wfRAF = requestAnimationFrame(draw);
   };
   draw();
 }
-function stopWaveform() {
+function stopWaveform(v) {
   if (wfRAF) { cancelAnimationFrame(wfRAF); wfRAF = null; }
-  if (wf) wf.classList.remove('playing');
-  wfBars.forEach(b => b.style.height = '5px');
+  if (!v) return;
+  if (v.wf) v.wf.classList.remove('playing');
+  v.bars.forEach(b => b.style.height = '5px');
 }
+function setLabel(v, text) { if (v && v.label) v.label.textContent = text; }
 function scheduleBuffer(f32, rate) {
   const ctx = getCtx();
   const buf = ctx.createBuffer(1, f32.length, rate);
@@ -585,45 +650,49 @@ function stopPlayback() {
   scheduledNodes = [];
   if (endTimer) { clearTimeout(endTimer); endTimer = null; }
   playing = false; streaming = false;
-  stopWaveform();
-  if (playLabel) playLabel.textContent = storedChunks.length ? 'Replay' : 'Play answer';
+  const v = activeVoice;
+  stopWaveform(v);
+  setLabel(v, v && v.chunks.length ? 'Replay' : 'Play answer');
+  activeVoice = null;
 }
-function scheduleEndReset() {
+function scheduleEndReset(v) {
   const ctx = getCtx();
   const remaining = Math.max(0, (nextStartTime - ctx.currentTime) * 1000);
   if (endTimer) clearTimeout(endTimer);
   endTimer = setTimeout(() => {
     playing = false; streaming = false;
-    stopWaveform();
-    if (playLabel) playLabel.textContent = 'Replay';
+    stopWaveform(v);
+    setLabel(v, 'Replay');
     scheduledNodes = [];
+    if (activeVoice === v) activeVoice = null;
   }, remaining + 120);
 }
-function playStored() {
-  if (!storedChunks.length) return;
+function playStored(v) {
+  if (!v.chunks.length) return;
   nextStartTime = 0; scheduledNodes = []; playing = true;
-  if (playLabel) playLabel.textContent = 'Speaking';
-  startWaveform();
-  storedChunks.forEach(f32 => scheduleBuffer(f32, storedRate));
-  scheduleEndReset();
+  activeVoice = v;
+  setLabel(v, 'Speaking');
+  startWaveform(v);
+  v.chunks.forEach(f32 => scheduleBuffer(f32, v.rate));
+  scheduleEndReset(v);
 }
 
-async function speakUrduStream() {
-  streaming = true; playing = true;
-  if (playBtn) playBtn.disabled = true;
-  if (playLabel) playLabel.textContent = 'Generating audio…';
+async function speakUrduStream(v) {
+  streaming = true; playing = true; activeVoice = v;
+  if (v.btn) v.btn.disabled = true;
+  setLabel(v, 'Generating audio…');
   const ctx = getCtx();
   if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) {} }
-  startWaveform();
-  nextStartTime = 0; scheduledNodes = []; storedChunks = [];
+  startWaveform(v);
+  nextStartTime = 0; scheduledNodes = []; v.chunks = [];
   let started = false;
   try {
     const res = await fetch('/speak_urdu_stream', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ text: currentAnswer, language: 'ur' })
+      body: JSON.stringify({ text: v.text, language: 'ur', readings: v.readings })
     });
     if (!res.ok) throw new Error('urdu stream failed (' + res.status + ')');
-    storedRate = parseInt(res.headers.get('X-Sample-Rate') || '24000', 10);
+    v.rate = parseInt(res.headers.get('X-Sample-Rate') || '24000', 10);
     const reader = res.body.getReader();
     let buf = new Uint8Array(0);
     while (true) {
@@ -642,7 +711,7 @@ async function speakUrduStream() {
         try {
           const audioBuffer = await ctx.decodeAudioData(wavBytes.buffer.slice(
             wavBytes.byteOffset, wavBytes.byteOffset + wavBytes.byteLength));
-          storedChunks.push(audioBuffer.getChannelData(0).slice());
+          v.chunks.push(audioBuffer.getChannelData(0).slice());
           const node = ctx.createBufferSource();
           node.buffer = audioBuffer; node.connect(analyser);
           const now = ctx.currentTime;
@@ -650,40 +719,48 @@ async function speakUrduStream() {
           node.start(nextStartTime);
           nextStartTime += audioBuffer.duration;
           scheduledNodes.push(node);
-          if (!started) { started = true; if (playLabel) playLabel.textContent = 'Speaking'; }
+          if (!started) { started = true; setLabel(v, 'Speaking'); }
         } catch (e) { console.error('[urdu_stream] decode error', e); }
       }
     }
-    streaming = false; scheduleEndReset();
+    streaming = false; scheduleEndReset(v);
   } catch (err) {
     console.error('[urdu_stream] error:', err);
-    stopWaveform();
-    if (playLabel) playLabel.textContent = 'Play answer';
+    stopWaveform(v);
+    setLabel(v, 'Play answer');
     streaming = false; playing = false;
+    if (activeVoice === v) activeVoice = null;
     showError("Urdu voice failed: " + err.message);
-  } finally { if (playBtn) playBtn.disabled = false; }
+  } finally { if (v.btn) v.btn.disabled = false; }
 }
 
-async function speakAnswer(auto) {
-  if (playing || streaming) { stopPlayback(); return; }
-  if (storedChunks.length) { playStored(); return; }
-  if (selectedLang === 'ur') { return speakUrduStream(); }
+async function speakAnswer(v, auto) {
+  // clicking the playing panel stops it; clicking another one switches to it
+  if (playing || streaming) {
+    const wasActive = activeVoice;
+    stopPlayback();
+    if (wasActive === v) return;
+  }
+  if (v.chunks.length) { playStored(v); return; }
+  // use the answer's language, not the toggle's: an Urdu answer replayed
+  // after switching to English still needs Urdu TTS
+  if (v.language === 'ur') { return speakUrduStream(v); }
 
-  streaming = true; playing = true;
-  if (playBtn) playBtn.disabled = true;
-  if (playLabel) playLabel.textContent = 'Generating audio…';
+  streaming = true; playing = true; activeVoice = v;
+  if (v.btn) v.btn.disabled = true;
+  setLabel(v, 'Generating audio…');
   const ctx = getCtx();
   if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) {} }
-  startWaveform();
+  startWaveform(v);
   let started = false;
-  nextStartTime = 0; storedChunks = []; scheduledNodes = [];
+  nextStartTime = 0; v.chunks = []; scheduledNodes = [];
   try {
     const res = await fetch('/speak_stream', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ text: currentAnswer })
+      body: JSON.stringify({ text: v.text })
     });
     if (!res.ok) throw new Error('stream failed (' + res.status + ')');
-    storedRate = parseInt(res.headers.get('X-Sample-Rate') || '24000', 10);
+    v.rate = parseInt(res.headers.get('X-Sample-Rate') || '24000', 10);
     const reader = res.body.getReader();
     let leftover = new Uint8Array(0);
     while (true) {
@@ -700,18 +777,19 @@ async function speakAnswer(auto) {
       const int16 = new Int16Array(frame.buffer, frame.byteOffset, frame.length / 2);
       const f32 = new Float32Array(int16.length);
       for (let i = 0; i < int16.length; i++) f32[i] = int16[i] / 32768;
-      storedChunks.push(f32);
-      scheduleBuffer(f32, storedRate);
-      if (!started) { started = true; if (playLabel) playLabel.textContent = 'Speaking'; }
+      v.chunks.push(f32);
+      scheduleBuffer(f32, v.rate);
+      if (!started) { started = true; setLabel(v, 'Speaking'); }
     }
-    streaming = false; scheduleEndReset();
+    streaming = false; scheduleEndReset(v);
   } catch (err) {
     console.error('[stream] error:', err);
-    stopWaveform();
-    if (playLabel) playLabel.textContent = 'Play answer';
+    stopWaveform(v);
+    setLabel(v, 'Play answer');
     streaming = false; playing = false;
+    if (activeVoice === v) activeVoice = null;
     showError("Couldn't stream audio: " + err.message);
-  } finally { if (playBtn) playBtn.disabled = false; }
+  } finally { if (v.btn) v.btn.disabled = false; }
 }
 </script>
 </body>

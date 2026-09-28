@@ -1,12 +1,8 @@
 """Deterministic entity detection.
 
-Separate from retrieval so name-matching a string does not pull in ChromaDB,
-Ollama and BM25.
-
-Stage 2 of disambiguation: the LLM normalises the query, then this matcher
-extracts entities from the clean text. Deterministic so routing stays
-inspectable. Brittle against raw STT noise ("Habib" -> "hadees") without the
-LLM layer in front.
+Separate from retrieval so it doesn't import ChromaDB, Ollama and BM25. Runs
+after the supervisor's rewrite: raw STT misses names ("Habib" heard as
+"hadees").
 """
 
 from __future__ import annotations
@@ -16,10 +12,18 @@ import re
 ENTITY_ALIASES: dict[str, list[str]] = {
     "lums": ["lums", "lahore university of management",
              "لمز", "لُمز", "ایل یو ایم ایس"],
+    # Habib isn't in the corpus (site blocks the crawler). The alias scopes
+    # retrieval to an entity with no chunks, so the answer says it isn't
+    # covered instead of using another university's pages.
     "habib": ["habib", "habib university",
               "حبیب", "حبیب یونیورسٹی", "حبيب"],
     "nust": ["nust", "national university of sciences",
              "نست", "نسٹ"],
+    # no bare "fast": it's an ordinary word ("how fast do they reply"). The
+    # supervisor's rewrite resolves FAST from context.
+    "fast": ["fast nuces", "fast-nuces", "fast university", "fast nu",
+             "fast-nu", "nuces", "national university of computer",
+             "فاسٹ"],
     "sat": ["sat", "scholastic aptitude test", "college board",
             "ایس اے ٹی", "کالج بورڈ"],
     "hec_nbs": ["hec need-based", "hec need based", "need-based scholarship",
@@ -29,10 +33,11 @@ ENTITY_ALIASES: dict[str, list[str]] = {
                    "bisp scholarship", "احساس", "بینظیر"],
 }
 
-# Short aliases that are substrings of common words, so they MUST match on a
+# Short aliases that are substrings of common words, so they must match on a
 # word boundary, not as a bare substring:
 #   "sat" in "satisfy", "net" in "internet", "nbs" in ...  -> false positives.
-_WORD_BOUNDARY_ALIASES = {"sat", "net", "nbs", "ehsas", "nust", "lums", "habib"}
+_WORD_BOUNDARY_ALIASES = {"sat", "net", "nbs", "ehsas", "nust", "lums", "habib",
+                          "nuces", "fast nu"}
 
 
 def _alias_matches(alias: str, query_lc: str) -> bool:

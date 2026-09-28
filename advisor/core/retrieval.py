@@ -14,6 +14,7 @@ import argparse
 import re
 import sys
 import threading
+from dataclasses import dataclass
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -39,9 +40,8 @@ def embed_query(text: str, client: ollama.Client) -> list[float]:
 
 
 def warm_embedder() -> None:
-    """Load bge-m3 into Ollama now so the first query doesn't pay the
-    cold-load. Retries because Ollama's CUDA init can fail transiently
-    when it races other GPU init at startup."""
+    """Load bge-m3 into Ollama at startup so the first query skips the cold
+    load. Retries: Ollama's CUDA init sometimes fails racing other GPU init."""
     import time
     client = ollama.Client(host=cfg.OLLAMA_HOST)
     for attempt in range(3):
@@ -62,9 +62,8 @@ _init_lock = threading.Lock()
 
 
 def get_collection() -> chromadb.Collection:
-    """One client per process, behind a lock. Agents run concurrently, and
-    building a PersistentClient per call made three threads race to initialise
-    the same store, which fails with a tenant error."""
+    """One client per process, behind a lock. A PersistentClient per call had
+    3 agent threads racing to initialise the store (tenant error)."""
     global _collection
     if _collection is None:
         with _init_lock:
@@ -126,7 +125,32 @@ class Corpus:
             (m.get("source_url", ""), m.get("chunk_position", -1)): i
             for i, m in enumerate(self.metas)
         }
+        # programme tokens -> [(entity_id, page url)], from URL slugs. Grows
+        # with ingestion, unlike the hand-written KNOWN_PROGRAMS (went stale).
+        self.programme_pages: dict[frozenset, list[tuple[str, str]]] = {}
+        for url, i in {m.get("source_url", ""): i
+                       for i, m in enumerate(self.metas)}.items():
+            owner = _page_programme(url)
+            if owner:
+                self.programme_pages.setdefault(frozenset(owner), []).append(
+                    (self.metas[i].get("entity_id", ""), url))
         self.bm25 = BM25Okapi([_tokenize(d) for d in self.docs])
+
+    def bm25_ranking_urls(self, query: str, urls: set[str]) -> list[str]:
+        """BM25 over one programme's pages (a few dozen chunks), on heading +
+        body. Inside one page the heading separates sections ("Test
+        Requirements" for a tests query). The global index stays body-only:
+        corpus-wide, boilerplate headings outscore content."""
+        idxs = [i for i, m in enumerate(self.metas)
+                if m.get("source_url") in urls]
+        if not idxs:
+            return []
+        texts = [f"{self.metas[i].get('headings', '')} {self.docs[i]}"
+                 for i in idxs]
+        mini = BM25Okapi([_tokenize(t) for t in texts])
+        scores = mini.get_scores(_tokenize(query))
+        order = sorted(range(len(idxs)), key=lambda j: scores[j], reverse=True)
+        return [self.ids[idxs[j]] for j in order if scores[j] > 0]
 
     def bm25_ranking(self, query: str, entity_id: str | None) -> list[str]:
         scores = self.bm25.get_scores(_tokenize(query))
@@ -145,9 +169,8 @@ _corpus: "Corpus | None" = None
 
 
 def get_corpus(collection: chromadb.Collection) -> "Corpus":
-    """Build the BM25 index once per process. Rebuilding it per call meant
-    every query re-read and re-tokenised the whole corpus, and three parallel
-    agents did it three times at once."""
+    """BM25 index, built once per process. Per-call rebuilds re-tokenised the
+    whole corpus on every query, 3 times over with parallel agents."""
     global _corpus
     if _corpus is None:
         with _init_lock:
@@ -175,7 +198,11 @@ def _rrf_fuse(rankings: list[list[str]], k: int) -> list[str]:
 
 
 _PROG_STOPWORDS = {"bs", "bsc", "ba", "bba", "hons", "honours", "programme",
-                   "program", "major", "joint", "the", "and", "for", "with"}
+                   "program", "major", "joint", "the", "and", "for", "with",
+                   # degree words and abbreviations that appear in slugs like
+                   # bachelors-of-science-in-computer-science-bscs
+                   "bachelor", "bachelors", "bscs", "bsai", "bsds", "bsse",
+                   "bscy", "bece", "bee"}
 
 _DEGREE_SLUG = re.compile(r"^(bs|bsc|ba|bba|be|ms|msc|mphil|phd|llb|ba-ll)\b")
 
@@ -185,51 +212,175 @@ def _slug_tokens(text: str) -> set[str]:
     return {w for w in words if w not in _PROG_STOPWORDS and len(w) > 2}
 
 
-def _page_programme(source_url: str) -> set[str]:
-    """Programme tokens for a programme page, empty for anything else.
+# SEECS slugs carry the intake (-for-fall-2025-on-wards) and the spelled-out
+# degree (bachelor-of-science-in-); strip both or tokens never match a query
+_SLUG_INTAKE = re.compile(r"-(?:for-)?(?:fall|spring)-?\d{4}.*$|-\d{4}(?:-.*)?$")
+_SLUG_DEGREE = re.compile(r"^bachelors?-of-(?:science-in-|arts-in-|science-|arts-)?")
 
-    The URL slug is the one unambiguous name a page has -- headings vary in
-    wording and contain commas that break parsing, but
-    /programmes/bs-computer-science identifies exactly one degree.
-    """
+
+def _page_programme(source_url: str) -> set[str]:
+    """Programme tokens for a programme page from its URL slug, empty for
+    anything else. Slug formats differ per site: LUMS /programmes/bs-computer-
+    science, FAST /Program/BS(CS), SEECS /program/bachelor-of-science-in-
+    artificial-intelligence-for-fall-2025-on-wards. Listing pages
+    (/departments/, /Degree-Programs) stay neutral."""
     if not source_url:
         return set()
-    slug = source_url.rstrip("/").rsplit("/", 1)[-1].lower()
+    low = source_url.lower()
+    slug = low.rstrip("/").rsplit("/", 1)[-1]
     looks_like_programme = (
-        "/programmes/" in source_url
-        or "/department" in source_url
+        "/programmes/" in low
+        or "/programme/" in low
+        or "/program/" in low
+        or "/department-page/" in low
         or bool(_DEGREE_SLUG.match(slug))
     )
-    return _slug_tokens(slug) if looks_like_programme else set()
+    if not looks_like_programme:
+        return set()
+    canon = _PROG_CANON.get(slug)      # FAST-style abbreviation slugs: bs(cs)
+    if canon:
+        return _slug_tokens(canon)
+    slug = _SLUG_INTAKE.sub("", slug)
+    slug = _SLUG_DEGREE.sub("", slug)
+    return _slug_tokens(slug)
+
+
+# _slug_tokens drops the degree prefix and anything under 3 chars, so "BS CS"
+# gave an empty set and scoping silently turned off. Map short forms to long.
+_PROG_CANON = {
+    "bscs": "bs computer science", "bs cs": "bs computer science",
+    "bs(cs)": "bs computer science", "bs(ai)": "bs artificial intelligence",
+    "bs ai": "bs artificial intelligence", "bs(ds)": "bs data science",
+    "bs(se)": "bs software engineering", "bs(cy)": "bs cyber security",
+    "bs(ee)": "bs electrical engineering", "bs(ce)": "bs computer engineering",
+    "bs(cv)": "bs civil engineering", "bs(me)": "bs mechanical engineering",
+    "bs(af)": "bs accounting and finance", "bs(ba)": "bs business analytics",
+    "bs(fintech)": "bs financial technology",
+}
+
+# short forms students type, for retrieval only (KNOWN_PROGRAMS also feeds the
+# crawler's mentioned_programs). Word-boundary matched ("cs" not in "physics").
+# No "se"/"ds": they collide with romanised Urdu.
+_PROG_ALIASES = {
+    "cs": "bs computer science", "comp sci": "bs computer science",
+    "compsci": "bs computer science", "ai": "bs artificial intelligence",
+}
 
 
 def _query_programme(query: str) -> set[str]:
-    """Distinctive tokens of the longest known programme named in the query.
+    """Distinctive tokens of the longest programme named in the query.
 
-    Also tries each name without its degree prefix, since the supervisor's
-    rewrite often drops it -- "LUMS ka CS ka fee" comes back as "the Computer
-    Science program at LUMS", which would not match "BS Computer Science".
+    Known-list pass also tries names without the degree prefix (the rewrite
+    turns "LUMS ka CS ka fee" into "the Computer Science program at LUMS").
+    Corpus pass matches any ingested programme whose tokens are all in the
+    query.
     """
     low = query.lower()
     best = ""
-    for p in cfg.KNOWN_PROGRAMS:
-        full = p.lower()
+    candidates = [(p.lower(), _PROG_CANON.get(p.lower(), p.lower()))
+                  for p in cfg.KNOWN_PROGRAMS]
+    candidates += list(_PROG_ALIASES.items())
+    for form0, full in candidates:
         stripped = _DEGREE_SLUG.sub("", full).strip()
-        for form in (full, stripped):
-            if form and form in low and len(form) > len(best):
-                best = form
-    return _slug_tokens(best) if best else set()
+        for form, matched in ((form0, full), (stripped, stripped)):
+            if (form and len(matched) > len(best)
+                    and re.search(rf"\b{re.escape(form)}\b", low)):
+                best = matched
+    known = _slug_tokens(best) if best else set()
+
+    qtokens = _slug_tokens(low)
+    corpus_best: frozenset = frozenset()
+    for tokens in _corpus_programme_sets():
+        if tokens <= qtokens and len(tokens) > len(corpus_best):
+            corpus_best = tokens
+    return set(corpus_best) if len(corpus_best) > len(known) else known
 
 
-def scope_to_programme(query: str, results: list[dict]) -> list[dict]:
-    """Reorder so the programme the student named comes first.
+_prog_sets: list[frozenset] | None = None
 
-    LUMS publishes one page per programme, each repeating similarly worded fee
-    and admission sections, so a fee question returns several programmes' worth
-    of near-identical prose that the embedding cannot separate. Matching is by
-    token subset, not overlap, so a Computer Science query does not pull in
-    Computer Engineering. Nothing is dropped: pages naming another programme
-    are demoted, pages naming none stay put.
+
+def _corpus_programme_sets() -> list[frozenset]:
+    global _prog_sets
+    if _prog_sets is None:
+        try:
+            _prog_sets = list(get_corpus(get_collection()).programme_pages)
+        except Exception:
+            return []          # no corpus (unit tests); known-list pass stands
+    return _prog_sets
+
+
+def detect_programme(text: str) -> str:
+    """Canonical display form (the page slug) of the programme the text names,
+    or ''. A string for the supervisor's cross-check; _query_programme turns it
+    back into the same tokens."""
+    tokens = frozenset(_query_programme(text))
+    if not tokens:
+        return ""
+    pages = get_corpus(get_collection()).programme_pages.get(tokens)
+    if pages:
+        slug = pages[0][1].rstrip("/").rsplit("/", 1)[-1]
+        return slug.replace("-", " ")
+    return " ".join(sorted(tokens))
+
+
+def programme_catalogue() -> list[str]:
+    """Every ingested programme and the institutions that teach it, for the
+    supervisor's prompt. From the corpus, not a hand list."""
+    corpus = get_corpus(get_collection())
+    out = []
+    for tokens, pages in sorted(corpus.programme_pages.items(),
+                                key=lambda kv: sorted(kv[0])):
+        slug = pages[0][1].rstrip("/").rsplit("/", 1)[-1].replace("-", " ")
+        ents = sorted({e for e, _ in pages if e})
+        out.append(f"{slug} ({', '.join(ents)})")
+    return out
+
+
+def _programme_hits(corpus, collection, qvec, bm25_q: str, wanted: frozenset,
+                    k: int, entity_id: str | None) -> list[dict]:
+    """Hybrid top-k over the named programme's own pages only.
+
+    A couple of dozen programme pages share near-identical criteria/dates
+    blocks, so the named programme's copy can miss the general pool. Hybrid
+    because dense ranked "Important Note" above "Test Requirements" for a tests
+    query. Exact token set: a joint major is a superset with its own fee table.
+    """
+    pages = corpus.programme_pages.get(wanted, [])
+    urls = [u for e, u in pages if not entity_id or e == entity_id]
+    if not urls:
+        return []
+    try:
+        res = collection.query(query_embeddings=[qvec], n_results=k,
+                               where={"source_url": {"$in": urls}})
+        dense_ids = res["ids"][0]
+    except Exception as exc:
+        print(f"[retrieve] programme-scoped query failed: {exc}")
+        return []
+    bm25_ids = corpus.bm25_ranking_urls(bm25_q, set(urls))[:k]
+
+    out = []
+    for cid in _rrf_fuse([dense_ids, bm25_ids], k):
+        i = corpus.pos_by_id.get(cid)
+        if i is None:
+            continue
+        out.append({"id": cid, "doc": corpus.docs[i], "meta": corpus.metas[i],
+                    "in_dense": cid in dense_ids, "in_bm25": cid in bm25_ids,
+                    "programme_scoped": True})
+    return out
+
+
+def scope_to_programme(query: str, results: list[dict],
+                       drop_other: bool = False) -> list[dict]:
+    """Reorder so the named programme comes first.
+
+    LUMS has one page per programme with near-identical fee/admission sections
+    the embedding can't tell apart. Exact token-set match: subset matching let
+    /bsc-honours-economics-data-and-computer-science (a superset) bring its fee
+    table into a CS query.
+
+    drop_other removes pages naming a different programme; pages naming none
+    stay (general fee policy, shared deadlines). Off by default so the
+    baseline's retrieve() is unchanged.
     """
     wanted = _query_programme(query)
     if not wanted:
@@ -240,18 +391,16 @@ def scope_to_programme(query: str, results: list[dict]) -> list[dict]:
         owner = _page_programme(r.get("meta", {}).get("source_url", ""))
         if not owner:
             neutral.append(r)
-        elif wanted <= owner:
+        elif (wanted == owner) if drop_other else (wanted <= owner):
             match.append(r)
         else:
             other.append(r)
-    return match + neutral + other
+    return match + neutral + ([] if drop_other else other)
 
 
 def _dedupe_identical(results: list[dict]) -> list[dict]:
-    """Drop chunks whose text is identical to one already kept. Pages that
-    share a block (the same deadlines table on every programme page) otherwise
-    fill the context with copies. Near-identical content is left alone -- fee
-    tables differ between programmes even where they look alike."""
+    """Drop exact duplicate chunk text (e.g. the same deadlines table on every
+    programme page). Near-duplicates stay: fee tables that look alike differ."""
     seen: set[int] = set()
     out = []
     for r in results:
@@ -265,14 +414,11 @@ def _dedupe_identical(results: list[dict]) -> list[dict]:
 
 def expand_neighbours(corpus, results: list[dict], window: int = 1,
                       top: int = 3) -> list[dict]:
-    """Pull each hit's adjacent chunks from the same page.
+    """Pull adjacent chunks (by chunk_position) for the top hits.
 
-    Structure-aware chunking splits a section from the note that explains it --
-    a fee table ends up in one chunk and "the above breakdown is for Year 1" in
-    the next. The note retrieves well (prose, fee vocabulary) and the table does
-    not (digits and pipes), so the note wins and the numbers are never seen.
-    Expanding by position recovers the pair. This is the parent window from the
-    design, built at query time from chunk_position rather than stored.
+    A fee table and its note ("the above breakdown is for Year 1") can land in
+    separate chunks; the note ranks, the table (digits, pipes) doesn't. A
+    parent window built at query time.
     """
     seen = {r["id"] for r in results}
     out: list[dict] = []
@@ -311,12 +457,11 @@ def hybrid_one(corpus, collection, qvec, bm25_query, k, entity_id, mode):
     """Top-k for one entity (or all) via dense / bm25 / hybrid."""
     pool = max(k * 3, 15)
     dense_ids = _dense_ranking(collection, qvec, entity_id, pool)
-    # skip BM25 scoring entirely in dense mode -- it was being computed over
-    # the whole corpus and thrown away
+    # dense mode: don't score BM25 over the whole corpus just to discard it
     bm25_ids = ([] if mode == "dense"
                 else corpus.bm25_ranking(bm25_query, entity_id)[:pool])
 
-    # matched_by should reflect each retriever's OWN top-k, not the pool
+    # matched_by should reflect each retriever's own top-k, not the pool
     dense_top = set(dense_ids[:k])
     bm25_top = set(bm25_ids[:k])
 
@@ -353,6 +498,7 @@ def retrieve(query: str, k: int, entity: str | None, mode: str,
         label = f"single entity filter={entity}"
         bm25_q = clean_for_bm25(query, [entity])
         results = hybrid_one(corpus, collection, qvec, bm25_q, k, entity, mode)
+        scope_ents = [entity]
     else:
         detected = detect_entities(query)
         bm25_q = clean_for_bm25(query, detected)
@@ -369,6 +515,22 @@ def retrieve(query: str, k: int, entity: str | None, mode: str,
         else:
             label = "no entity detected (whole collection)"
             results = hybrid_one(corpus, collection, qvec, bm25_q, k, None, mode)
+        scope_ents = detected or [None]
+
+    # named programme: pull its pages directly, since reordering can't add
+    # chunks the pool never had
+    wanted = frozenset(_query_programme(query))
+    if wanted:
+        seen = {r["id"] for r in results}
+        extra = []
+        for eid in scope_ents:
+            for h in _programme_hits(corpus, collection, qvec, bm25_q,
+                                     wanted, k, eid):
+                if h["id"] not in seen:
+                    seen.add(h["id"])
+                    extra.append(h)
+        results = extra + results
+        label += f" | programme={'-'.join(sorted(wanted))} (+{len(extra)} scoped)"
 
     results = scope_to_programme(query, results)
     if expand:
@@ -402,33 +564,170 @@ def retrieve(query: str, k: int, entity: str | None, mode: str,
     return results
 
 
-def retrieve_for_subtask(
-    query: str,
-    k: int,
-    entities: list[str],
-    mode: str = "hybrid",
-    expand: int = 1,
-) -> list[dict]:
-    """Quiet retrieval for orchestration: entities come from the supervisor's
-    decomposition, so no re-detection and no printing. `retrieve()` above is
-    left untouched -- it is the CLI/baseline path."""
+# Scoped retrieval for the multi-agent arm; retrieve() above stays the
+# baseline's. Scopes add entities, never filter: a university+scholarship
+# scope would hide SAT registration fees (on the exam body's page).
+
+CATEGORY_BOOST = 3      # ranks a preferred-category chunk climbs, at most
+
+
+@dataclass
+class RetrievalSpec:
+    query: str
+    k: int = 5
+    entities: list[str] | None = None            # from the planner
+    expand_types: list[str] | None = None        # agent's authority expansion
+    programme: str | None = None                 # None = infer from the query
+    prefer_categories: list[str] | None = None   # ranking prior, never a filter
+    mode: str = "dense"
+    expand: int = 1
+
+
+_by_type: dict[str, list[str]] | None = None
+
+
+def entities_by_type(entity_type: str) -> list[str]:
+    """Entity ids of a given type, from the corpus. Not entities.json's
+    linked_entity_ids: every university lists ['sat', 'hec_nbs'] and none
+    list hec_ehsaas, so Ehsaas questions never reached its pages."""
+    global _by_type
+    if _by_type is None:
+        corpus = get_corpus(get_collection())
+        _by_type = {}
+        for m in corpus.metas:
+            _by_type.setdefault(m.get("entity_type", ""), [])
+            eid = m.get("entity_id")
+            if eid and eid not in _by_type[m.get("entity_type", "")]:
+                _by_type[m.get("entity_type", "")].append(eid)
+    return list(_by_type.get(entity_type, []))
+
+
+def _boost_categories(results: list[dict], prefer: list[str]) -> list[dict]:
+    """Move preferred-category chunks up, at most CATEGORY_BOOST ranks. Not a
+    filter: content_category matches the text only 45% of the time for
+    eligibility, 32% for test_format."""
+    if not prefer:
+        return results
+    wanted = set(prefer)
+    ranked = [
+        (rank - (CATEGORY_BOOST if r.get("meta", {}).get("content_category") in wanted else 0),
+         rank, r)
+        for rank, r in enumerate(results)
+    ]
+    ranked.sort(key=lambda t: (t[0], t[1]))
+    return [r for _, _, r in ranked]
+
+
+def search(spec: RetrievalSpec) -> list[dict]:
+    """Scoped retrieval for a specialist agent."""
     ollama_client = get_ollama()
     collection = get_collection()
     corpus = get_corpus(collection)
-    qvec = embed_query(query, ollama_client)
-    bm25_q = clean_for_bm25(query, entities)
+    qvec = embed_query(spec.query, ollama_client)
 
-    if not entities:
-        results = hybrid_one(corpus, collection, qvec, bm25_q, k, None, mode)
-    else:
+    targets = list(spec.entities or [])
+    for t in spec.expand_types or []:
+        for eid in entities_by_type(t):
+            if eid not in targets:
+                targets.append(eid)
+
+    # over-retrieve before the programme filter, then trim: filtering k hits
+    # can leave nothing (a "BS CS fee" query whose top hits are all BS Biology)
+    wanted = frozenset(_query_programme(spec.programme or spec.query))
+    scoping = bool(wanted)
+    pool_k = spec.k * 4 if scoping else spec.k
+
+    bm25_q = clean_for_bm25(spec.query, targets)
+    if targets:
         results = []
-        for eid in entities:
-            results.extend(hybrid_one(corpus, collection, qvec, bm25_q, k, eid, mode))
+        for eid in targets:
+            results.extend(
+                hybrid_one(corpus, collection, qvec, bm25_q, pool_k, eid, spec.mode))
+    else:
+        results = hybrid_one(corpus, collection, qvec, bm25_q, pool_k, None, spec.mode)
 
-    results = scope_to_programme(query, results)
-    if expand:
-        results = expand_neighbours(corpus, results, window=expand)
+    # fetch the named programme's pages directly and prepend them, so the
+    # per-entity trim keeps them
+    if wanted:
+        seen = {r["id"] for r in results}
+        extra = []
+        for eid in (targets or [None]):
+            for h in _programme_hits(corpus, collection, qvec, bm25_q,
+                                     wanted, spec.k, eid):
+                if h["id"] not in seen:
+                    seen.add(h["id"])
+                    extra.append(h)
+        results = extra + results
+
+    results = _boost_categories(results, spec.prefer_categories or [])
+    results = scope_to_programme(spec.programme or spec.query, results, drop_other=True)
+
+    if scoping:                     # keep k per entity, not k overall
+        # cap programme and neutral pages separately: FAST's fees are on a page
+        # naming no programme, and with one cap BS CS curriculum chunks pushed
+        # the fee table out
+        per_group: dict[tuple[str, bool], int] = {}
+        trimmed = []
+        for r in results:
+            meta = r.get("meta", {})
+            key = (meta.get("entity_id", "?"),
+                   bool(_page_programme(meta.get("source_url", ""))))
+            if per_group.get(key, 0) >= spec.k:
+                continue
+            per_group[key] = per_group.get(key, 0) + 1
+            trimmed.append(r)
+        results = trimmed
+
+    if spec.expand:
+        results = expand_neighbours(corpus, results, window=spec.expand)
     return results
+
+
+def scan(entity_types: list[str] | None = None,
+         entities: list[str] | None = None,
+         categories: list[str] | None = None,
+         mentions_exam: str | None = None,
+         mentions_scholarship: str | None = None,
+         mentions_programme: str | None = None,
+         limit: int | None = None) -> list[dict]:
+    """Metadata-only lookup for enumerations ("which universities accept the
+    SAT"); dense search answers those with the exam body's own pages.
+    Filtered in Python (Chroma can't substring-match the mentioned_* fields).
+    Recall is limited to the crawler's KNOWN_* lists, so callers confirm each
+    hit with search()."""
+    corpus = get_corpus(get_collection())
+    out = []
+    for i, meta in enumerate(corpus.metas):
+        if entity_types and meta.get("entity_type") not in entity_types:
+            continue
+        if entities and meta.get("entity_id") not in entities:
+            continue
+        if categories and meta.get("content_category") not in categories:
+            continue
+        for term, field in ((mentions_exam, "mentioned_exams"),
+                            (mentions_scholarship, "mentioned_scholarships"),
+                            (mentions_programme, "mentioned_programs")):
+            if term and term.lower() not in str(meta.get(field, "")).lower():
+                break
+        else:
+            out.append({"id": corpus.ids[i], "doc": corpus.docs[i], "meta": meta,
+                        "in_dense": False, "in_bm25": False})
+            if limit and len(out) >= limit:
+                break
+    return out
+
+
+def entities_mentioning(field_term: str, kind: str = "exam",
+                        entity_types: list[str] | None = None) -> list[str]:
+    """Entities that mention a term, most mentions first. The candidate step
+    of an enumeration."""
+    kwargs = {f"mentions_{kind}": field_term, "entity_types": entity_types}
+    counts: dict[str, int] = {}
+    for c in scan(**kwargs):
+        eid = c["meta"].get("entity_id")
+        if eid:
+            counts[eid] = counts.get(eid, 0) + 1
+    return sorted(counts, key=lambda e: -counts[e])
 
 
 def parse_args() -> argparse.Namespace:

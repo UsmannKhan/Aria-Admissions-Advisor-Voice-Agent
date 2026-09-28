@@ -1,4 +1,4 @@
-"""Admissions agent: eligibility, programmes, fees, deadlines, applying."""
+"""Cost agent: fees, scholarships, financial aid, funding eligibility, awards."""
 
 from __future__ import annotations
 
@@ -20,33 +20,35 @@ from advisor.core.llm import ANSWER_MODEL, generate
 from advisor.multi_agent import verify as V
 
 FRAMING = """
-You are handling the admissions part of this question: eligibility, programmes,
-fee structures, deadlines, and how to apply.
+You are handling the scholarships part of this question: financial aid, funding
+eligibility, award amounts, and how to apply.
 
-- Fee bases differ between institutions and are not comparable unless stated.
-  LUMS publishes first-year annual figures; NUST publishes per-semester tuition
-  by discipline group. Always say which basis a figure is on.
-- Several programmes can share an identical fee table. Cite the source for the
-  programme actually asked about, not another with the same numbers.
-- Programme coverage is uneven. If the sources give entry requirements but no
-  curriculum, answer the requirements and say the curriculum detail is not
-  available.
+- Several schemes are all described as "need-based" and must not be blurred
+  together. For each one, say which body administers it and where the student
+  actually applies, since those differ: some are applied for through the
+  university, others through the awarding body's own portal.
+- Some schemes exclude self-finance admissions, private universities, or
+  affiliated campuses. State such a rule as the rule. Do not decide whether a
+  particular institution falls under it unless the sources say so.
+- Eligibility often turns on household income or BISP registration, which the
+  sources do not contain. Explain the criteria, then ask the student directly
+  for the one or two details you would need to tell them where they stand.
 """
 
 MODEL = ANSWER_MODEL
-DOMAIN = "admissions"
+DOMAIN = "cost"
 K = 5
 MODE = "dense"
 # entity types added to the planner's, never a filter
-EXPAND_TYPES = []
+EXPAND_TYPES = ['scholarship']
 # ranking prior only: content_category matches the text 32-90% of the time
-PREFER_CATEGORIES = ['eligibility', 'programs', 'application_process', 'documents']
+PREFER_CATEGORIES = ['fees', 'scholarship_info']
 # off: no verification. lite: V1+V2 flags decide, no judge. full: V1-V3.
 VERIFY_MODE = V.env_mode()
 VERIFY = VERIFY_MODE != "off"
 # staleness is always checked; the live refetch is opt-in (a network round
 # trip per turn)
-LIVE_FETCH = os.environ.get("ADVISOR_LIVE_FETCH", "0") != "0"  
+LIVE_FETCH = os.environ.get("ADVISOR_LIVE_FETCH", "0") != "0"   
 
 class Claim(BaseModel):
     text: str
@@ -119,7 +121,7 @@ def run(state: dict) -> dict:
 
     results, shape_block = T.gather_evidence(
         shape, query, entities, k, MODE, EXPAND_TYPES, PREFER_CATEGORIES,
-        enumerate_kind='programme', enumerate_over=['university'],
+        enumerate_kind='scholarship', enumerate_over=['university', 'scholarship'],
         programme=subtask.get("programme") or None)
 
     if VERIFY:
@@ -142,7 +144,7 @@ def run(state: dict) -> dict:
                  "Apply these where the sources make them relevant, and do not "
                  "ask again for anything listed here.\n")
 
-    tool_block = T.academic_check(profile, results)
+    tool_block = T.cost_summary(profile, results)
     ask_block = T.asked_before(state.get("history"))
 
     prompt = (
@@ -197,7 +199,7 @@ def run(state: dict) -> dict:
 
         return partial(query, answer, claims, results, False, struck,
                        V.as_of_date(verified) if VERIFY else "",
-                       T.coverage_note(query, 'programme', language)
+                       T.coverage_note(query, 'scholarship', language)
                        if shape == "enumeration" else "",
                        parsed.question.strip(), parsed.pivot.strip(),
                        [{'written': r.written, 'spoken': r.spoken}
@@ -207,7 +209,7 @@ def run(state: dict) -> dict:
 
     except Exception as exc:
         print(f"[{DOMAIN}] generation failed ({exc})")
-        return partial(query, "I ran into a problem looking that up.",
+        return partial(query, "I ran into a problem looking up the funding details.",
                        [], results, True)
 
 

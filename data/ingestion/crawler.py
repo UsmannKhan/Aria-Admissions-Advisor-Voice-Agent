@@ -1,20 +1,12 @@
 """
-Main ingestion script.
+Main ingestion script: crawl each entity's URLs (Crawl4AI), clean to
+markdown, chunk by heading, classify freshness, extract mentions, embed
+(Ollama) and upsert into ChromaDB.
 
-Reads entities.json, crawls each entity's URLs with Crawl4AI, cleans
-content to Markdown, chunks semantically (respecting headings),
-classifies freshness, extracts mentioned entities, embeds via Ollama,
-and upserts into ChromaDB.
+Idempotent: a page's old chunks are deleted before upsert, so a re-run
+replaces them (no orphans when a page shrinks).
 
-Idempotent: before upserting, all existing chunks for each crawled
-source_url are deleted, so re-runs fully replace a page's chunks (no
-stale orphans when a page shrinks). Safe to re-run after partial failures.
-
-Usage:
-    python crawler.py                          # Run all entities
-    python crawler.py --entity fast            # One entity (for debugging)
-    python crawler.py --entity fast --limit 5  # Cap pages per entity
-    python crawler.py --dry-run                # Skip embedding/DB writes
+    python crawler.py [--entity fast] [--limit 5] [--dry-run]
 """
 
 from __future__ import annotations
@@ -149,8 +141,8 @@ def _split_oversized(text: str, max_chars: int) -> list[str]:
 _LINK_RE = re.compile(r"\[[^\]]*\]\([^)]*\)")  # markdown links [text](url)
 
 
-# chrome fragments that mark a chunk as pure site furniture even under a
-# heading (footer/copyright/social/SharePoint nav). Matched case-insensitively.
+# fragments that mark a chunk as site chrome even under a heading (footer,
+# copyright, social, SharePoint nav). Case-insensitive.
 _CHROME_MARKERS = (
     "all rights reserved",
     "privacy policy",
@@ -181,11 +173,23 @@ def _has_prose(text: str) -> bool:
     return bool(_PROSE_RE.search(stripped))
 
 
+def _strip_trailing_chrome(text: str) -> str:
+    """Cut a swallowed footer off the end of a content chunk. FAST's
+    campus-links footer on every page got the last real chunk dropped by the
+    chrome test (the Schedule page's only chunk, HowToApply's SAT paragraph)."""
+    low = text.lower()
+    first = min((p for p in (low.find(m) for m in _CHROME_MARKERS) if p != -1),
+                default=-1)
+    if first <= 200:
+        return text
+    cut = text.rfind("\n", 0, first)
+    return text[:cut if cut > 0 else first].rstrip()
+
+
 def _is_nav_boilerplate(text: str, headings: list[str]) -> bool:
-    """Drop pure site chrome (nav menus, footers, social/legal blocks) even
-    when it inherits a real heading. Chunks with genuine prose (contact info,
-    programme lists, fee/eligibility text) are kept -- that borderline cleanup
-    is left to the retrieval side, per design."""
+    """Drop pure site chrome (nav, footers, social/legal) even under a real
+    heading. Chunks with prose (contact info, programme lists, fee text) stay;
+    borderline cases are left to retrieval."""
     stripped = text.strip()
     if not stripped:
         return True
@@ -205,7 +209,16 @@ def _is_nav_boilerplate(text: str, headings: list[str]) -> bool:
     if _has_prose(stripped):
         return False
 
-    # no prose: drop if link-dominated, many links, or any chrome marker
+    # no prose isn't enough: tables have no sentences either. With links and
+    # images removed a table keeps its dates/figures and a nav menu is empty
+    # (the link-ratio test used to drop FAST's admission schedule)
+    bare = _LINK_RE.sub("", re.sub(r"!\[[^\]]*\]\([^)]*\)", "", stripped))
+    bare = re.sub(r"[\s|*\-#>_:.]+", "", bare)
+    if len(bare) >= 200:
+        return False
+
+    # no prose, no table-like body: drop if link-dominated, many links, or
+    # any chrome marker
     return link_ratio > 0.4 or len(links) >= 6 or chrome_hits >= 1
 
 def _content_key(text: str) -> str:
@@ -222,6 +235,7 @@ def _dedupe_and_clean(chunks: list["Chunk"]) -> list["Chunk"]:
     dropped_dup = 0
 
     for ch in chunks:
+        ch.text = _strip_trailing_chrome(ch.text)
         if _is_nav_boilerplate(ch.text, ch.headings):
             dropped_nav += 1
             log.info("    DROP[nav]: headings=%s | %s", ch.headings, ch.text[:80].replace("\n", " "))
@@ -304,7 +318,7 @@ def chunk_markdown(markdown: str) -> list[Chunk]:
                     continue
             chunks.append(Chunk(text=part, headings=heading_path))
 
-    # clean BEFORE numbering so positions reflect the final set
+    # clean before numbering so positions reflect the final set
     chunks = _dedupe_and_clean(chunks)
 
     for i, ch in enumerate(chunks):
@@ -322,14 +336,13 @@ def classify_freshness(
     text: str,
     universal: dict,
 ) -> tuple[cfg.FreshnessClass, int | None]:
-    """Return (freshness_class, cycle_year) for ONE CHUNK's text (not the whole
-    page -- classifying per-page then stamping every chunk was tagging entire
-    pages cycle_bound off a single stray 'Fall 2026' in a footer). cycle_bound
-    now requires the chunk to be *about* a cycle: multiple cycle mentions, or a
-    cycle marker together with fee/deadline/schedule language."""
+    """(freshness_class, cycle_year) for one chunk. Per chunk because per-page
+    marked whole pages cycle_bound off one stray 'Fall 2026' in a footer.
+    cycle_bound needs 2+ cycle mentions, or one with fee/deadline/schedule
+    wording."""
     cycle_year: int | None = None
 
-    # URL path -> time_sensitive (the page IS a dates/schedule page)
+    # URL path -> time_sensitive (the page is a dates/schedule page)
     path = urlparse(url).path.lower()
     for pat in universal.get("time_sensitive_path_patterns", []):
         if pat.lower() in path:
@@ -344,8 +357,7 @@ def classify_freshness(
                 cycle_year = int(ym.group(0))
             return "cycle_bound", cycle_year
 
-    # Cycle markers in THIS chunk's content -- but only cycle_bound if the
-    # chunk is genuinely cycle-specific, not just mentioning a year in passing.
+    # cycle markers in the chunk text; cycle_bound only if it's about that cycle
     cyc_pats = universal.get("cycle_markers", {}).get("content_patterns", [])
     cyc_hits = 0
     for pat_str in cyc_pats:
@@ -361,7 +373,7 @@ def classify_freshness(
         r"last date|apply by|admission cycle|for fall|for spring)\b",
         text, re.IGNORECASE,
     )
-    # cycle_bound requires: 2+ cycle mentions, OR one cycle marker sitting in
+    # cycle_bound requires: 2+ cycle mentions, or one cycle marker sitting in
     # fee/deadline/schedule context. A lone "Class of 2027" won't trigger it.
     if cyc_hits >= 2 or (cyc_hits >= 1 and cycle_context):
         return "cycle_bound", cycle_year
@@ -404,7 +416,7 @@ def classify_content_category(url: str, headings: list[str]) -> str:
 
 
 def _build_term_regexes(terms: list[str]) -> tuple[re.Pattern | None, re.Pattern | None]:
-    """Two regexes: short all-caps acronyms match case-SENSITIVELY (else
+    """Two regexes: short all-caps acronyms match case-sensitively (else
     "sat their exams" hits SAT, "net cost" hits NET), everything else
     case-insensitively."""
     strict = [t for t in terms if t.isupper() and len(t) <= 4]
@@ -539,7 +551,7 @@ async def crawl_entity(entity_id: str, entity: dict, universal: dict,
     default_depth = entity_crawl.get("depth", 2)
     browser_cfg = build_browser_config(ssl_verify)
 
-    # roots can be "url" or {"url": ..., "depth": 0} -- self-contained pages
+    # roots can be "url" or {"url": ..., "depth": 0}; self-contained pages
     # crawl at depth 0 so they don't re-fetch shared nav links per root
     run_cfg_by_depth: dict[int, CrawlerRunConfig] = {}
 
@@ -615,7 +627,7 @@ async def crawl_entity(entity_id: str, entity: dict, universal: dict,
                     continue
                 seen_urls.add(url)
 
-                # crawl4ai may expose markdown as str OR object with raw_markdown.
+                # crawl4ai may expose markdown as str or object with raw_markdown.
                 md_obj = getattr(result, "markdown", None)
                 if md_obj is None:
                     continue
@@ -676,7 +688,7 @@ def get_chroma_collection() -> chromadb.Collection:
 
 
 def chunk_id_for(source_url: str, chunk_position: int) -> str:
-    """Deterministic chunk ID -- re-runs overwrite same content."""
+    """Deterministic chunk ID, so re-runs overwrite same content."""
     raw = f"{source_url}#{chunk_position}".encode("utf-8")
     return hashlib.sha256(raw).hexdigest()[:24]
 
@@ -706,9 +718,7 @@ def process_page(
     for chunk in chunks:
         mentions = extract_mentions(chunk.text)
         content_category = classify_content_category(page.url, chunk.headings)
-        # freshness per-chunk: page-level classification stamped whole pages
-        # cycle_bound off one stray year. Pass URL (for path/URL rules) + this
-        # chunk's own text (for content rules).
+        # per chunk: URL for the path rules, chunk text for the content rules
         freshness, cycle_year = classify_freshness(page.url, chunk.text, universal)
 
         meta = cfg.ChunkMetadata(
@@ -736,10 +746,8 @@ def process_page(
             mentioned_amounts=mentions["amounts"],
         )
 
-        # entity + heading path go into the EMBEDDED text only (proven setup);
-        # stored body stays clean. Gemini already receives institution+section
-        # via the context wrapper at generation time, so prefixing stored text is
-        # redundant and would surface the marker to users.
+        # entity + heading path only in the embedded text; the stored body stays
+        # clean (the prompt already labels each source's institution/section)
         heading_ctx = " > ".join(h for h in chunk.headings if h) if chunk.headings else ""
         prefix = f"{entity_name} | {heading_ctx}".strip(" |")
         embed_text = f"{prefix}\n\n{chunk.text}" if prefix else chunk.text

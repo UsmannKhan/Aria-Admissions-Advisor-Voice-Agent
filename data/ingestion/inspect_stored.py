@@ -65,7 +65,7 @@ def show_entity(col, entity, full):
 
 
 def show_url(col, url_sub):
-    """All chunks for one page, IN ORDER, with boundary view: end of each
+    """All chunks for one page, in order, with boundary view: end of each
     chunk + start of the next, so you can see if a thought split across them."""
     ids, docs, metas = load_all(col)
     rows = [(i, d, m) for i, d, m in zip(ids, docs, metas)
@@ -121,7 +121,7 @@ def main():
 
 
 def dump_all(col, out_path="all_chunks.txt"):
-    """Write EVERY chunk (full text + metadata) grouped by entity, ordered by
+    """Write every chunk (full text + metadata) grouped by entity, ordered by
     source_url then chunk_position, so the file reads like the source pages."""
     ids, docs, metas = load_all(col)
     rows = list(zip(ids, docs, metas))

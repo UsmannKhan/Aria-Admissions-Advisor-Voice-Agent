@@ -1,6 +1,6 @@
 """
-Single-agent RAG: retrieve -> prompt -> Gemini -> cited answer. This is the
-baseline arm of the evaluation, so its behaviour is pinned.
+Single-agent RAG: retrieve -> prompt -> ANSWER_MODEL -> cited answer. This is
+the baseline arm of the evaluation, so its behaviour is pinned.
 
     python advisor/baseline/pipeline.py "compare CS eligibility at LUMS and NUST"
     python advisor/baseline/pipeline.py "what are the LUMS fees" --k 6 --mode dense
@@ -16,18 +16,18 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if __package__ in (None, ""):          # running as a script
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from google.genai import types
 from pydantic import BaseModel
 
 from advisor.core.retrieval import retrieve
-from advisor.core.llm import ANSWER_MODEL, THINKING_LEVEL, get_client
+from advisor.core.persona import language_clause
+from advisor.core.llm import ANSWER_MODEL, generate as llm_generate
 
-GEMINI_MODEL = ANSWER_MODEL
+MODEL = ANSWER_MODEL
 
 
 class Claim(BaseModel):
-    """One factual claim and the source number(s) backing it. Self-reported by
-    the generator; the Phase 2 verifier re-checks it against the source."""
+    """One factual claim and the source number(s) backing it, as reported by
+    the generator."""
     text: str
     sources: list[int]
 
@@ -82,21 +82,6 @@ def build_context(results: list[dict]) -> str:
             f"[Source {i}] institution={entity} | section: {headings}\n{doc}\n"
         )
     return "\n".join(lines)
-
-
-def language_clause(language: str) -> str:
-    if language == "ur":
-        return (
-            "\n- Write the answer in simple, everyday spoken Urdu, the way a "
-            "friendly counsellor would talk to a student. Avoid formal, "
-            "literary, or heavily Sanskritised Urdu. Write numbers and percentages in Urdu script. For common study terms "
-            "that students normally say in English, write the English word in "
-            "Urdu script rather than translating to formal Urdu (for example "
-            "write maths as 'میتھس' not 'ریاضی'; write 'کمپیوٹر سائنس', "
-            "'مارکس', 'پرسنٹ'). The extracted 'claims' should also be in "
-            "this simple Urdu."
-        )
-    return "\n- Write the answer in English."
 
 
 def build_prompt(query: str, context: str) -> str:
@@ -159,10 +144,10 @@ def print_sources(results: list[dict], used_numbers: list[int]) -> None:
             print(f"  [{entity}] {url}")
 
 
-def answer_query(query: str, k: int, mode: str, client,
+def answer_query(query: str, k: int, mode: str,
                  results: list[dict] | None = None, language: str = "en"):
-    """Retrieve (unless results passed in), call Gemini, return (results,
-    parsed). Printing is left to the caller."""
+    """Retrieve (unless results passed in), call the answer model, return
+    (results, parsed). Printing is left to the caller."""
     import time
     if results is None:
         t0 = time.time()
@@ -173,24 +158,17 @@ def answer_query(query: str, k: int, mode: str, client,
 
     prompt = build_prompt(query, build_context(results))
     t0 = time.time()
-    resp = client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION + language_clause(language),
-            thinking_config=types.ThinkingConfig(thinking_level=THINKING_LEVEL),
-            response_mime_type="application/json",
-            response_schema=AdvisorResponse,
-        ),
-    )
-    print(f"[time] gemini call: {time.time() - t0:.1f}s")
-    return results, resp.parsed
+    parsed = llm_generate(
+        MODEL, prompt,
+        system=SYSTEM_INSTRUCTION + language_clause(language),
+        schema=AdvisorResponse,
+    ).parsed
+    print(f"[time] llm call: {time.time() - t0:.1f}s")
+    return results, parsed
 
 
 def generate(query: str, k: int, mode: str, speak_answer: bool = False) -> None:
-    client = get_client()
-
-    results, parsed = answer_query(query, k, mode, client)
+    results, parsed = answer_query(query, k, mode)
     if not results:
         print("\nNo sources retrieved; nothing to answer from.")
         return

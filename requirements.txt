@@ -1,15 +1,42 @@
-crawl4ai
-chromadb
-ollama
-crawl4ai-setup
-rank_bm25
-google-genai
-python-dotenv
-kokoro soundfile
-faster-whisper
-ctranslate2
-fastapi
-uvicorn
-python-multipart
-omnivoice
-httpx
+# Main environment (venv). Versions are the ones the evaluation ran on.
+#
+# Install torch first with the CUDA build for your machine, otherwise
+# faster-whisper and kokoro pull the CPU build:
+#   pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+#
+# After installing, run `crawl4ai-setup` once. It downloads the headless
+# browser the crawler and the live page refresh use; the advisor itself runs
+# without it.
+#
+# OmniVoice (Urdu speech) lives in its own environment: requirements-omni.txt.
+
+# retrieval and knowledge base
+chromadb==1.5.9
+ollama==0.6.2
+rank-bm25==0.2.2
+crawl4ai==0.8.9
+
+# models and orchestration
+google-genai==2.8.0
+openai==2.41.0
+langgraph==1.2.9
+langgraph-checkpoint-sqlite==3.1.0
+pydantic==2.13.4
+
+# speech
+faster-whisper==1.2.1
+ctranslate2==4.8.0
+kokoro==0.9.4
+soundfile==0.14.0
+
+# server
+fastapi==0.137.1
+uvicorn==0.49.0
+python-multipart==0.0.32
+httpx==0.28.1
+python-dotenv==1.2.2
+
+# evaluation statistics and tests
+numpy==2.4.6
+scipy==1.17.1
+pytest==9.1.1

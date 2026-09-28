@@ -224,14 +224,15 @@ __marimo__/
 # rewritten wholesale on every crawl. Snapshot it separately to pin the corpus
 # for evaluation -- do not carry it in history.
 data/chroma_db/
+data/chroma_db_backup_2026-08-23
 
-# Recorded queries and synthesised answers
-data/audio/
+# Recorded queries and synthesised answers. The sample/ folder stays: it
+# holds the reference clip OmniVoice clones for the Urdu voice.
+data/audio/input/
+data/audio/output/
 
 # Crawl logs and corpus inspection dumps
 data/ingestion/logs/
-data/ingestion/all_chunks.txt
-data/ingestion/inspect_*.txt
 
 # LangGraph session checkpoints (per-session history and profile)
 advisor/multi_agent/sessions.db

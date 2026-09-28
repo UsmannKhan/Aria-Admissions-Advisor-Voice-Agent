@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -9,12 +10,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if __package__ in (None, ""):          # running as a script
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from google.genai import types
 from pydantic import BaseModel
 
-from advisor.core.retrieval import retrieve
-from advisor.core.persona import CLAIMS_INSTRUCTION, PERSONA
-from advisor.core.llm import ANSWER_MODEL, THINKING_LEVEL, get_client
+from advisor.core.retrieval import RetrievalSpec, search
+from advisor.multi_agent import tools as T
+from advisor.core.persona import (CLAIMS_INSTRUCTION, ELICITATION, PERSONA,
+                                  SURFACING, language_clause, today_clause)
+from advisor.core.llm import ANSWER_MODEL, generate
+from advisor.multi_agent import verify as V
 
 FRAMING = """
 You are handling the entrance-exam part of this question: which tests are
@@ -31,23 +34,41 @@ accepted, test format and subjects, scoring and weightings, and test-day rules.
 """
 
 MODEL = ANSWER_MODEL
-THINKING = THINKING_LEVEL
 DOMAIN = "exams"
 K = 5
-MODE = "dense"   
-
-client = get_client()
-
+MODE = "dense"
+# entity types added to the planner's, never a filter
+EXPAND_TYPES = ['exam']
+# ranking prior only: content_category matches the text 32-90% of the time
+PREFER_CATEGORIES = ['test_format', 'test_rules', 'scoring']
+# off: no verification. lite: V1+V2 flags decide, no judge. full: V1-V3.
+VERIFY_MODE = V.env_mode()
+VERIFY = VERIFY_MODE != "off"
+# staleness is always checked; the live refetch is opt-in (a network round
+# trip per turn)
+LIVE_FETCH = os.environ.get("ADVISOR_LIVE_FETCH", "0") != "0"   
 
 class Claim(BaseModel):
     text: str
     sources: list[int]
 
 
+class Reading(BaseModel):
+    """Spoken form of a figure in the answer, for the Urdu TTS (can't read
+    bare digits). Empty for English."""
+    written: str
+    spoken: str
+
+
 class Answer(BaseModel):
     answer: str
     claims: list[Claim]
     sources_used: list[int]
+    number_readings: list[Reading] = []
+    # one clarifying question or ""; separate from `answer` so assembly can
+    # cap and dedupe
+    question: str
+    pivot: str
 
 
 def build_context(results: list[dict]) -> str:
@@ -62,7 +83,12 @@ def build_context(results: list[dict]) -> str:
 
 
 def partial(query: str, answer: str, claims: list[dict],
-            sources: list[dict], abstained: bool) -> dict:
+            sources: list[dict], abstained: bool,
+            struck: list[dict] | None = None, as_of: str = "",
+            scope_note: str = "", question: str = "",
+            pivot: str = "", readings: list[dict] | None = None,
+            verified: list[dict] | None = None,
+            calibration: dict | None = None) -> dict:
     return {"partials": [{
         "domain": DOMAIN,
         "query": query,
@@ -70,6 +96,15 @@ def partial(query: str, answer: str, claims: list[dict],
         "claims": claims,
         "sources": sources,
         "abstained": abstained,
+        "struck": struck or [],
+        "as_of": as_of,
+        "scope_note": scope_note,
+        "question": question,
+        "pivot": pivot,
+        "readings": readings or [],
+        # every claim with its verdict (kept ones too), for verifier calibration
+        "verified": verified or [],
+        "calibration": calibration or {},
     }]}
 
 
@@ -79,12 +114,20 @@ def run(state: dict) -> dict:
     entities = subtask.get("entities") or []
     k = state.get("k", K)
 
-    results: list[dict] = []
-    if entities:
-        for eid in entities:
-            results.extend(retrieve(query, k=k, entity=eid, mode=MODE))
-    else:
-        results = retrieve(query, k=k, entity=None, mode=MODE)
+    shape = subtask.get("shape", "lookup")
+    language = state.get("language", "en")
+
+    results, shape_block = T.gather_evidence(
+        shape, query, entities, k, MODE, EXPAND_TYPES, PREFER_CATEGORIES,
+        enumerate_kind='exam', enumerate_over=['university'],
+        programme=subtask.get("programme") or None)
+
+    if VERIFY:
+        # before generation, so the model never sees expired evidence
+        expired = V.refresh_evidence(results, live=LIVE_FETCH)
+        if expired:
+            print(f"[{DOMAIN}] {expired} stale chunk(s) in evidence"
+                  + (" (refreshed where possible)" if LIVE_FETCH else ""))
 
     if not results:
         print(f"[{DOMAIN}] no chunks retrieved")
@@ -99,28 +142,74 @@ def run(state: dict) -> dict:
                  "Apply these where the sources make them relevant, and do not "
                  "ask again for anything listed here.\n")
 
+    # acceptance is per institution: pull each university's own passage, not
+    # the exam body's pages
+    tool_block, extra = T.acceptance_table(query)
+    if extra:
+        seen = {r["id"] for r in results}
+        results.extend(r for r in extra if r["id"] not in seen)
+
+    ask_block = T.asked_before(state.get("history"))
+
     prompt = (
-        f"SOURCES:\n{build_context(results)}\n-----{known}\n"
-        f"QUESTION: {query}\n\nAnswer using only the sources above."
+        f"SOURCES:\n{build_context(results)}\n-----{known}{shape_block}"
+        f"{tool_block}{ask_block}\n"
+        f"THE STUDENT ASKED: {state.get('raw_query') or query}\n"
+        f"SEARCHED AS: {query}\n\n"
+        f"Answer what they actually asked, using only the sources above."
     )
 
     try:
-        resp = client.models.generate_content(
-            model=MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=PERSONA + FRAMING + CLAIMS_INSTRUCTION,
-                thinking_config=types.ThinkingConfig(thinking_level=THINKING),
-                response_mime_type="application/json",
-                response_schema=Answer,
-            ),
-        )
-        parsed = resp.parsed
+        parsed = generate(
+            MODEL, prompt,
+            system=(PERSONA + FRAMING + SURFACING + ELICITATION
+                    + CLAIMS_INSTRUCTION + today_clause()
+                    + language_clause(language)),
+            schema=Answer,
+        ).parsed
         if not parsed:
             raise ValueError("empty response")
         claims = [{"text": c.text, "sources": c.sources} for c in parsed.claims]
-        print(f"[{DOMAIN}] {len(results)} chunks, {len(claims)} claims")
-        return partial(query, parsed.answer, claims, results, False)
+        answer = parsed.answer
+
+        verified = []
+        if VERIFY:
+            verified, kept, struck = V.review(claims, results, query, profile,
+                                              judge=VERIFY_MODE == "full")
+            stale = V.hedge_stale_claims(verified, results)
+            kept, struck = V.partition(verified)
+            print(f"[{DOMAIN}] {len(results)} chunks, {len(claims)} claims, "
+                  f"{V.summarise(verified)} {V.calibration(verified)}"
+                  + (f" stale={stale}" if stale else ""))
+            for s in struck:
+                print(f"[{DOMAIN}] STRUCK ({s['verdict']}) {s['text']}")
+                for n in s["notes"]:
+                    print(f"[{DOMAIN}]        {n}")
+            if struck and not kept:
+                return partial(query, "I could not confirm any of that against "
+                               "the official sources, so I would rather not "
+                               "guess.", [], results, True, struck,
+                               verified=verified,
+                               calibration=V.calibration(verified))
+            if struck:
+                rewritten = V.rewrite_answer(query, kept, struck, PERSONA,
+                                             language)
+                if rewritten:
+                    answer = rewritten
+            claims = kept or claims
+        else:
+            struck = []
+            print(f"[{DOMAIN}] {len(results)} chunks, {len(claims)} claims")
+
+        return partial(query, answer, claims, results, False, struck,
+                       V.as_of_date(verified) if VERIFY else "",
+                       T.coverage_note(query, 'exam', language)
+                       if shape == "enumeration" else "",
+                       parsed.question.strip(), parsed.pivot.strip(),
+                       [{'written': r.written, 'spoken': r.spoken}
+                        for r in parsed.number_readings],
+                       verified=verified,
+                       calibration=V.calibration(verified) if VERIFY else {})
 
     except Exception as exc:
         print(f"[{DOMAIN}] generation failed ({exc})")
