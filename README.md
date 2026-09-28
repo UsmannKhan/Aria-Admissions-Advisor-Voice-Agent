@@ -38,9 +38,9 @@ correctness on top, and the verifier as built did not help.
    read back with Kokoro (English) or OmniVoice (Urdu), streamed sentence by
    sentence so the first audio starts within a few seconds.
 
-The baseline arm is `advisor/baseline/pipeline.py`: one retrieval over the
-whole collection, one model call, no planner, no verifier. It is deliberately
-left alone so the comparison stays clean.
+The baseline arm is `advisor/baseline/pipeline.py`: keyword entity detection, 
+per-institution retrieval from the same module, one model call, no planner, no 
+verifier.
 
 ## Setting up
 
