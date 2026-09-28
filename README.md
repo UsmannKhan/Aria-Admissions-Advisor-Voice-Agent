@@ -86,8 +86,7 @@ The Urdu voice is cloned from `data/audio/sample/urdu_sample.wav`, which is in
 the repository. Recordings and synthesised answers go to `data/audio/input`
 and `data/audio/output`, which the server creates on start.
 
-The knowledge base lives in `data/chroma_db/`. It is not in git. Either unpack
-the snapshot supplied with the submission into that folder, or rebuild it
+The knowledge base lives in `data/chroma_db/`. It is not in git. Rebuild it
 with `python data/ingestion/crawler.py` (this crawls the live sites, so the
 result will differ from the snapshot the evaluation used).
 
